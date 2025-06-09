@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { toast } from "@/hooks/use-toast"
 
+// This component could use AuthContext for authentication (for future extensibility)
+
 export function TwoFactorForm() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)

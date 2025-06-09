@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { Menu, Bell, Search, User, PanelLeftClose, PanelLeft } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -15,10 +15,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useSidebar } from "@/components/dashboard/sidebar-provider"
+import { useAuth } from "@/context/AuthContext"
 
 export function DashboardHeader() {
   const { toggle, toggleCollapse, isCollapsed } = useSidebar()
   const pathname = usePathname()
+  const router = useRouter()
+
+  const { logout } = useAuth() // Provides login and authentication state
+
 
   // Get the current page title from the pathname
   const getPageTitle = () => {
@@ -96,10 +101,13 @@ export function DashboardHeader() {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <Link href="/auth/login" className="flex w-full">
+            <DropdownMenuItem
+              onClick={() => {
+                logout()
+                router.push("/auth/login")
+              }}
+            >
                 Sign out
-              </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

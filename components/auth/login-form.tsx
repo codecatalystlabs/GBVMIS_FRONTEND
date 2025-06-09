@@ -11,11 +11,12 @@ import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { toast } from "@/hooks/use-toast"
+import { useAuth } from "@/context/AuthContext" // AuthContext for authentication state management
+
+// This component uses AuthContext for authentication
 
 const formSchema = z.object({
-  email: z.string().email({
-    message: "Please enter a valid email address.",
-  }),
+  email: z.string().min(2),
   password: z.string().min(8, {
     message: "Password must be at least 8 characters.",
   }),
@@ -25,6 +26,7 @@ export function LoginForm() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const { login } = useAuth() // Provides login and authentication state
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -36,21 +38,18 @@ export function LoginForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true)
-
+    // Calls the login API, stores tokens, and updates context
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      // Redirect to 2FA page (in a real app, this would depend on the API response)
-      router.push("/auth/two-factor")
-    } catch (error) {
+      await login(values.email, values.password)
+      router.push("/dashboard") // Redirect after successful login
+    } catch (error: any) {
       toast({
-        title: "Error",
-        description: "Something went wrong. Please try again.",
+        title: "Login failed",
+        description: error?.message || "Invalid credentials. Please try again.",
         variant: "destructive",
-      })
+      }) // Display error message if login fails
     } finally {
-      setIsLoading(false)
+      setIsLoading(false) // Reset loading state after login attempt
     }
   }
 

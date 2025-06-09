@@ -12,6 +12,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { toast } from "@/hooks/use-toast"
 
+// This component should use AuthContext for authentication (for future extensibility)
+
 const formSchema = z
   .object({
     name: z.string().min(2, {

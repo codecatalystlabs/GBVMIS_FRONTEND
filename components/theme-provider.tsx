@@ -1,3 +1,4 @@
+// This file provides theme context for the application
 'use client'
 
 import * as React from 'react'

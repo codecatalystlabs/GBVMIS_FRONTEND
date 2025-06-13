@@ -17,6 +17,9 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
+import useSWR from "swr"
+import { fetcher } from "@/lib/api"
+import { PoliceOfficer } from "@/types"
 
 const leads = [
   {
@@ -66,8 +69,11 @@ const leads = [
   },
 ]
 
-export function LeadsTable() {
+export function PoliceOfficerTable() {
   const [selectedLeads, setSelectedLeads] = useState<string[]>([])
+  const { data, error, isLoading } = useSWR('/police-officers', fetcher);
+
+  console.log("Data fetched:", data);
 
   const toggleSelectAll = () => {
     if (selectedLeads.length === leads.length) {
@@ -134,7 +140,7 @@ export function LeadsTable() {
               <SelectItem value="100">100</SelectItem>
             </SelectContent>
           </Select>
-          <Button>Add Lead</Button>
+          <Button>Add Officer</Button>
         </div>
       </div>
       <div className="rounded-md border">
@@ -147,44 +153,30 @@ export function LeadsTable() {
                   onCheckedChange={toggleSelectAll}
                 />
               </TableHead>
-              <TableHead className="w-[100px]">ID</TableHead>
-              <TableHead>Name</TableHead>
+              <TableHead className="">Badge Number</TableHead>
+              <TableHead>First Name</TableHead>
+              <TableHead>Last Name</TableHead>
               <TableHead className="hidden md:table-cell">Email</TableHead>
-              <TableHead className="hidden md:table-cell">Company</TableHead>
-              <TableHead>
-                <div className="flex items-center">
-                  Status
-                  <ArrowUpDown className="ml-1 h-4 w-4" />
-                </div>
-              </TableHead>
+              <TableHead className="hidden md:table-cell">Rank</TableHead>                       
               <TableHead className="hidden md:table-cell">Source</TableHead>
-              <TableHead className="hidden md:table-cell">
-                <div className="flex items-center">
-                  Date
-                  <ArrowUpDown className="ml-1 h-4 w-4" />
-                </div>
-              </TableHead>
+  
               <TableHead className="w-[40px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {leads.map((lead) => (
-              <TableRow key={lead.id}>
+            {data?.data.map((officer: PoliceOfficer) => (
+              <TableRow key={officer.ID}>
                 <TableCell>
                   <Checkbox
-                    checked={selectedLeads.includes(lead.id)}
-                    onCheckedChange={() => toggleSelectLead(lead.id)}
+                    checked={selectedLeads.includes(officer.ID.toString())}
+                    onCheckedChange={() => toggleSelectLead(officer.ID.toString())}
                   />
                 </TableCell>
-                <TableCell className="font-medium">{lead.id}</TableCell>
-                <TableCell>{lead.name}</TableCell>
-                <TableCell className="hidden md:table-cell">{lead.email}</TableCell>
-                <TableCell className="hidden md:table-cell">{lead.company}</TableCell>
-                <TableCell>
-                  <Badge className={getStatusColor(lead.status)}>{lead.status}</Badge>
-                </TableCell>
-                <TableCell className="hidden md:table-cell">{lead.source}</TableCell>
-                <TableCell className="hidden md:table-cell">{lead.date}</TableCell>
+                <TableCell className="font-medium">{officer.badge_no}</TableCell>
+                <TableCell>{officer.first_name}</TableCell>
+                <TableCell>{officer.last_name}</TableCell>
+                <TableCell className="hidden md:table-cell">{officer.email}</TableCell>
+                <TableCell className="hidden md:table-cell">{officer.rank}</TableCell>
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>

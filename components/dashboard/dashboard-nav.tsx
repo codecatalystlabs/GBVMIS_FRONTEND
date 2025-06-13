@@ -26,8 +26,8 @@ const navItems: NavItem[] = [
     icon: Home,
   },
   {
-    title: "Leads",
-    href: "/dashboard/leads",
+    title: "Police Officer",
+    href: "/dashboard/police-officer",
     icon: Users,
   },
   {

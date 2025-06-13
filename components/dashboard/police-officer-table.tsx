@@ -16,78 +16,35 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
 import useSWR from "swr"
 import { fetcher } from "@/lib/api"
 import { PoliceOfficer } from "@/types"
 
-const leads = [
-  {
-    id: "LEAD-1234",
-    name: "John Smith",
-    email: "john.smith@example.com",
-    company: "Acme Inc.",
-    status: "New",
-    source: "Website",
-    date: "2023-04-23",
-  },
-  {
-    id: "LEAD-1235",
-    name: "Sarah Johnson",
-    email: "sarah.johnson@example.com",
-    company: "TechCorp",
-    status: "Contacted",
-    source: "Referral",
-    date: "2023-04-22",
-  },
-  {
-    id: "LEAD-1236",
-    name: "Michael Brown",
-    email: "michael.brown@example.com",
-    company: "Global Industries",
-    status: "Qualified",
-    source: "Event",
-    date: "2023-04-21",
-  },
-  {
-    id: "LEAD-1237",
-    name: "Emily Davis",
-    email: "emily.davis@example.com",
-    company: "Innovative Startups",
-    status: "New",
-    source: "LinkedIn",
-    date: "2023-04-20",
-  },
-  {
-    id: "LEAD-1238",
-    name: "Robert Wilson",
-    email: "robert.wilson@example.com",
-    company: "Strategic Solutions",
-    status: "Contacted",
-    source: "Website",
-    date: "2023-04-19",
-  },
-]
+
 
 export function PoliceOfficerTable() {
-  const [selectedLeads, setSelectedLeads] = useState<string[]>([])
+  const [selectedOfficer, setSelectedOfficer] = useState<string[]>([])
   const { data, error, isLoading } = useSWR('/police-officers', fetcher);
 
-  console.log("Data fetched:", data);
+  if (isLoading) return <div>Loading...</div>
 
+  if (error) return <div>Error loading data</div>
+  if (!data || !data.data || data.data.length === 0) {
+    return <div className="text-center text-muted-foreground">No police officers found.</div>
+  }
   const toggleSelectAll = () => {
-    if (selectedLeads.length === leads.length) {
-      setSelectedLeads([])
+    if (selectedOfficer.length === data?.data.length) {
+      setSelectedOfficer([])
     } else {
-      setSelectedLeads(leads.map((lead) => lead.id))
+      setSelectedOfficer(data?.data.map((officer:PoliceOfficer) => officer.ID.toString()) || [])
     }
   }
 
-  const toggleSelectLead = (id: string) => {
-    if (selectedLeads.includes(id)) {
-      setSelectedLeads(selectedLeads.filter((leadId) => leadId !== id))
+  const toggleSelectedOfficer = (id: string) => {
+    if (selectedOfficer.includes(id)) {
+      setSelectedOfficer(selectedOfficer.filter((leadId) => leadId !== id))
     } else {
-      setSelectedLeads([...selectedLeads, id])
+      setSelectedOfficer([...selectedOfficer, id])
     }
   }
 
@@ -110,7 +67,7 @@ export function PoliceOfficerTable() {
         <div className="flex items-center gap-2">
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input type="search" placeholder="Search leads..." className="w-full pl-8 sm:w-[300px]" />
+            <Input type="search" placeholder="Search police officers..." className="w-full pl-8 sm:w-[300px]" />
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -149,7 +106,7 @@ export function PoliceOfficerTable() {
             <TableRow>
               <TableHead className="w-[40px]">
                 <Checkbox
-                  checked={selectedLeads.length === leads.length && leads.length > 0}
+                  checked={selectedOfficer.length === data?.data.length && data?.data.length > 0}
                   onCheckedChange={toggleSelectAll}
                 />
               </TableHead>
@@ -168,8 +125,8 @@ export function PoliceOfficerTable() {
               <TableRow key={officer.ID}>
                 <TableCell>
                   <Checkbox
-                    checked={selectedLeads.includes(officer.ID.toString())}
-                    onCheckedChange={() => toggleSelectLead(officer.ID.toString())}
+                    checked={selectedOfficer.includes(officer.ID.toString())}
+                    onCheckedChange={() => toggleSelectedOfficer(officer.ID.toString())}
                   />
                 </TableCell>
                 <TableCell className="font-medium">{officer.badge_no}</TableCell>
@@ -200,7 +157,7 @@ export function PoliceOfficerTable() {
       </div>
       <div className="flex items-center justify-between">
         <div className="text-sm text-muted-foreground">
-          Showing <strong>1</strong> to <strong>{leads.length}</strong> of <strong>{leads.length}</strong> results
+          Showing <strong>1</strong> to <strong>{data?.data.length}</strong> of <strong>{data?.data.length}</strong> results
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" disabled>

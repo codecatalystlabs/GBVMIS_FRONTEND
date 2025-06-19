@@ -42,19 +42,8 @@ export function DashboardHeader() {
       </div>
       <div className="flex items-center gap-2 md:gap-4">
         <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="h-6 w-6"
-          >
-            <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
-          </svg>
-          <span className="hidden md:inline-block">Admin Dashboard</span>
+          
+          <span className="hidden md:inline-block">GBVMIS</span>
         </Link>
         <span className="text-lg font-semibold md:hidden">{getPageTitle()}</span>
         <div className="hidden md:block">
@@ -80,10 +69,12 @@ export function DashboardHeader() {
           <span className="sr-only">Notifications</span>
           <span className="absolute right-1 top-1 flex h-2 w-2 rounded-full bg-primary"></span>
         </Button>
+        
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="rounded-full">
               <User className="h-5 w-5" />
+              
               <span className="sr-only">User menu</span>
             </Button>
           </DropdownMenuTrigger>

@@ -35,5 +35,29 @@ export function ReportsDashboard() {
                 <LeadSourceChart />
               </CardContent>
             </Card>
-            <Card>\
-
+            <Card>
+              <CardHeader>
+                <CardTitle>Account Growth</CardTitle>
+                <CardDescription>Year-over-year account increase</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Placeholder for account growth chart or metrics.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+        <TabsContent value="sales">
+          <p className="text-muted-foreground">Detailed sales content goes here.</p>
+        </TabsContent>
+        <TabsContent value="leads">
+          <p className="text-muted-foreground">Lead tracking and breakdown here.</p>
+        </TabsContent>
+        <TabsContent value="accounts">
+          <p className="text-muted-foreground">Account management metrics here.</p>
+        </TabsContent>
+      </Tabs>
+    </div>
+  )
+}

@@ -16,3 +16,11 @@ export interface PoliceOfficer {
     roles: any | null;  
     cases: any | null;  
 }
+
+export interface Victim {
+  ID: number
+  first_name: string
+  last_name: string
+  gender: string
+  dob: string
+}

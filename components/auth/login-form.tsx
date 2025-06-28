@@ -27,7 +27,8 @@ export function LoginForm() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  const { login } = useAuth() // Provides login and authentication state
+  const { login } = useAuth() 
+  
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -108,6 +109,8 @@ async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(false)
   }
 }
+
+
 
 
   return (

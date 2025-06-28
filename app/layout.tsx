@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/context/AuthContext"
 import { SWRConfig } from "swr"
 import { fetcher } from "@/lib/api"
+import { ToastContainer } from 'react-toastify';
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -32,6 +33,19 @@ export default function RootLayout({
         <AuthProvider>
           <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
             {children}
+            <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick={false}
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+        // transition={Bounce}
+      />
           </ThemeProvider>
         </AuthProvider>
         </SWRConfig>

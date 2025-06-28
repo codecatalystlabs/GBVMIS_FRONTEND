@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default function OpportunitiesPage() {
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-bold">Opportunities</h1>
+      <h1 className="text-2xl font-bold">Police Posts</h1>
       <PolicePostsTable />
     </div>
   )

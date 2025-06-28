@@ -10,7 +10,8 @@ import { Eye, EyeOff, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { toast } from "@/hooks/use-toast"
+// import { toast } from "@/hooks/use-toast"
+import { toast } from "react-toastify"
 import { useAuth } from "@/context/AuthContext" // AuthContext for authentication state management
 
 // This component uses AuthContext for authentication
@@ -58,6 +59,8 @@ export function LoginForm() {
       setIsLoading(false) // Reset loading state after login attempt
     }
   }
+}
+
 
   return (
     <Form {...form}>
@@ -113,4 +116,3 @@ export function LoginForm() {
     </Form>
   )
 }
-

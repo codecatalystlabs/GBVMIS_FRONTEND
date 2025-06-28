@@ -36,6 +36,11 @@ const navItems: NavItem[] = [
     icon: Briefcase,
   },
   {
+    title: "Victims",
+    href: "/dashboard/victims",
+    icon: Users,
+  },
+  {
     title: "Accounts",
     href: "/dashboard/accounts",
     icon: Briefcase,
@@ -101,26 +106,7 @@ export function DashboardNav() {
           isCollapsed ? "md:w-[70px]" : "w-64",
         )}
       >
-        <div className={cn("flex h-16 items-center border-b px-4", isCollapsed && "justify-center px-0")}>
-          <Link
-            href="/dashboard"
-            className={cn("flex items-center gap-2 font-semibold", isCollapsed && "justify-center")}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="h-6 w-6"
-            >
-              <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
-            </svg>
-            {!isCollapsed && <span>Admin Dashboard</span>}
-          </Link>
-        </div>
+        
         <ScrollArea className="flex-1 py-2">
           <nav className={cn("grid gap-1", isCollapsed ? "px-1" : "px-2")}>
             <TooltipProvider delayDuration={0}>

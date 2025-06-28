@@ -125,8 +125,8 @@ export function PoliceOfficerTable() {
               <TableRow key={officer.ID}>
                 <TableCell>
                   <Checkbox
-                    checked={selectedOfficer.includes(officer.ID.toString())}
-                    onCheckedChange={() => toggleSelectedOfficer(officer.ID.toString())}
+                    checked={selectedOfficer.includes(officer?.ID?.toString())}
+                    onCheckedChange={() => toggleSelectedOfficer(officer?.ID?.toString())}
                   />
                 </TableCell>
                 <TableCell className="font-medium">{officer.badge_no}</TableCell>

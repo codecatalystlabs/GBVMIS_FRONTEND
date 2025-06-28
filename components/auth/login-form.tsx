@@ -88,8 +88,6 @@ async function onSubmit(values: z.infer<typeof formSchema>) {
       // transition: Bounce,
     })
 
-    // Wait 2 seconds before redirecting to allow the toast to be seen
-    await new Promise((resolve) => setTimeout(resolve, 2000))
 
     router.push("/dashboard")
   } catch (error: any) {

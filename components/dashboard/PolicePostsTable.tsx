@@ -3,6 +3,7 @@
 import useSWR from "swr"
 import { useState } from "react"
 import { MoreHorizontal, ChevronDown, Search, ArrowUpDown } from "lucide-react"
+import React from "react"
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -43,16 +44,35 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger, DialogClose, DialogDescription } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
+import { useToast } from "@/hooks/use-toast"
+import { toast } from "react-toastify"
+import { Dialog as ViewDialog, DialogContent as ViewDialogContent, DialogHeader as ViewDialogHeader, DialogTitle as ViewDialogTitle, DialogDescription as ViewDialogDescription } from "@/components/ui/dialog"
 
-
+const policePostSchema = z.object({
+  name: z.string().min(2, { message: "Name is required" }),
+  location: z.string().min(2, { message: "Location is required" }),
+  contact: z.string().min(2, { message: "Contact is required" }),
+})
+type PolicePostFormValues = z.infer<typeof policePostSchema>
 
 export function PolicePostsTable() {
   const [selectedPosts, setSelectedPosts] = useState<number[]>([])
   const [deleteId, setDeleteId] = useState<number | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [dialogMode, setDialogMode] = useState<'add' | 'edit'>('add')
+  const [editingPost, setEditingPost] = useState<any | null>(null)
+  const [formLoading, setFormLoading] = useState(false)
+  const [viewDialogOpen, setViewDialogOpen] = useState(false)
+  const [viewLoading, setViewLoading] = useState(false)
+  const [viewDetails, setViewDetails] = useState<any | null>(null)
 
-  // ✅ Use SWR to fetch police posts
   const { data, error, isLoading, mutate } = useSWR("/police-posts", fetcher)
 
   const posts = data?.data || []
@@ -86,6 +106,73 @@ export function PolicePostsTable() {
       alert("Failed to delete post.")
     } finally {
       setIsDeleting(false)
+    }
+  }
+
+  const form = useForm<PolicePostFormValues>({
+    resolver: zodResolver(policePostSchema),
+    defaultValues: { name: '', location: '', contact: '' },
+  })
+
+  // Reset form when dialog opens/closes or editingPost changes
+  React.useEffect(() => {
+    if (dialogOpen) {
+      if (dialogMode === 'edit' && editingPost) {
+        form.reset({
+          name: editingPost.name || '',
+          location: editingPost.location || '',
+          contact: editingPost.contact || '',
+        })
+      } else {
+        form.reset({ name: '', location: '', contact: '' })
+      }
+    }
+  }, [dialogOpen, dialogMode, editingPost, form])
+
+  const handleAddClick = () => {
+    setDialogMode('add')
+    setEditingPost(null)
+    setDialogOpen(true)
+  }
+
+  const handleEditClick = (post: any) => {
+    setDialogMode('edit')
+    setEditingPost(post)
+    setDialogOpen(true)
+  }
+
+  const handleViewClick = async (id: number) => {
+    setViewDialogOpen(true)
+    setViewLoading(true)
+    setViewDetails(null)
+    try {
+      const res = await fetcher(`/police-post/${id}`)
+      setViewDetails(res.data || res)
+    } catch (err: any) {
+      toast.error(err?.info?.message || err?.message || 'Failed to fetch details')
+      setViewDialogOpen(false)
+    } finally {
+      setViewLoading(false)
+    }
+  }
+
+  const onSubmit = async (values: PolicePostFormValues) => {
+    setFormLoading(true)
+    try {
+      if (dialogMode === 'add') {
+        await apiClient.post('/police-post', values)
+        toast.success('The police post was added successfully.')
+      } else if (dialogMode === 'edit') {
+          await apiClient.put(`/police-post/${editingPost.id}`, values)
+          toast.success('The police post was updated successfully.')
+
+      }
+      setDialogOpen(false)
+      mutate()
+    } catch (err: any) {
+      toast.error(err?.info?.message || err?.message)
+    } finally {
+      setFormLoading(false)
     }
   }
 
@@ -127,7 +214,7 @@ export function PolicePostsTable() {
               <SelectItem value="100">100</SelectItem>
             </SelectContent>
           </Select>
-          <Button>Add Police Post</Button>
+          <Button onClick={handleAddClick}>Add Police Post</Button>
         </div>
       </div>
       <div className="rounded-md border">
@@ -148,8 +235,8 @@ export function PolicePostsTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {posts.map((post: any) => (
-              <TableRow key={post.ID}>
+            {posts.map((post: any, idx: number) => (
+              <TableRow key={post.ID ?? `row-${idx}`}>
                 <TableCell>
                   <Checkbox
                     checked={selectedPosts.includes(post.ID)}
@@ -169,8 +256,8 @@ export function PolicePostsTable() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>View</DropdownMenuItem>
-                      <DropdownMenuItem>Edit</DropdownMenuItem>
+                      {/* <DropdownMenuItem onClick={() => handleViewClick(post.ID)}>View</DropdownMenuItem> */}
+                      <DropdownMenuItem onClick={() => handleEditClick(post)}>Edit</DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         className="text-destructive"
@@ -227,6 +314,78 @@ export function PolicePostsTable() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{dialogMode === 'add' ? 'Add Police Post' : 'Edit Police Post'}</DialogTitle>
+            <DialogDescription>
+              {dialogMode === 'add' ? 'Fill in the details to add a new police post.' : 'Update the details of the police post.'}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div>
+              <Label htmlFor="name">Name</Label>
+              <Input id="name" disabled={formLoading} {...form.register('name')} placeholder="e.g., Central Police Post" />
+              <span className="text-xs text-destructive">{form.formState.errors.name?.message as string}</span>
+            </div>
+            <div>
+              <Label htmlFor="location">Location</Label>
+              <Input id="location" disabled={formLoading} {...form.register('location')} placeholder="e.g., Kampala" />
+              <span className="text-xs text-destructive">{form.formState.errors.location?.message as string}</span>
+            </div>
+            <div>
+              <Label htmlFor="contact">Contact</Label>
+              <Input id="contact" disabled={formLoading} {...form.register('contact')} placeholder="e.g., 0700 000000" />
+              <span className="text-xs text-destructive">{form.formState.errors.contact?.message as string}</span>
+            </div>
+            <DialogFooter className="mt-4">
+              <DialogClose asChild>
+                <Button type="button" variant="outline" disabled={formLoading} onClick={() => setDialogOpen(false)}>
+                  Cancel
+                </Button>
+              </DialogClose>
+              <Button type="submit" disabled={formLoading}>
+                {formLoading ? (dialogMode === 'add' ? 'Adding...' : 'Saving...') : (dialogMode === 'add' ? 'Add' : 'Save')}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+      <ViewDialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
+        <ViewDialogContent>
+          <ViewDialogHeader>
+            <ViewDialogTitle>Police Post Details</ViewDialogTitle>
+            <ViewDialogDescription>
+              View all details for this police post.
+            </ViewDialogDescription>
+          </ViewDialogHeader>
+          {viewLoading ? (
+            <div className="py-8 text-center">Loading...</div>
+          ) : viewDetails ? (
+            <div className="space-y-4">
+              <div>
+                <Label>ID</Label>
+                <div className="border rounded px-3 py-2 bg-muted">{viewDetails.ID ?? viewDetails.id}</div>
+              </div>
+              <div>
+                <Label>Name</Label>
+                <div className="border rounded px-3 py-2 bg-muted">{viewDetails.name}</div>
+              </div>
+              <div>
+                <Label>Location</Label>
+                <div className="border rounded px-3 py-2 bg-muted">{viewDetails.location}</div>
+              </div>
+              <div>
+                <Label>Contact</Label>
+                <div className="border rounded px-3 py-2 bg-muted">{viewDetails.contact}</div>
+              </div>
+              {/* Add more fields here if needed */}
+            </div>
+          ) : (
+            <div className="py-8 text-center text-destructive">No details found.</div>
+          )}
+        </ViewDialogContent>
+      </ViewDialog>
     </div>
   )
 }

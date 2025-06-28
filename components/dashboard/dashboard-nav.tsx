@@ -46,8 +46,13 @@ const navItems: NavItem[] = [
     icon: Briefcase,
   },
   {
-    title: "Contacts",
-    href: "/dashboard/contacts",
+    title: "Facilities",
+    href: "/dashboard/facilities",
+    icon: Briefcase,
+  },
+  {
+    title: "Health Practitioners",
+    href: "/dashboard/health-practitioners",
     icon: Phone,
   },
   {

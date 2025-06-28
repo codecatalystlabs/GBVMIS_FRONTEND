@@ -41,6 +41,36 @@ export interface Permission {
   action: string;
 }
 
+export interface Case {
+  id: number;
+  case_number: string;
+  title: string;
+  description: string;
+  status: string;
+  date_opened: string;
+  suspect_id: number;
+  officer_id: number;
+  police_post_id: number;
+  charges: Charge[];
+  victims: any | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Charge {
+  id: number;
+  case_id: number;
+  charge_title: string;
+  description: string;
+  severity: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: {
+    time: string;
+    valid: boolean;
+  } | null;
+}
+
 export interface Victim {
   ID: number;
   first_name: string;

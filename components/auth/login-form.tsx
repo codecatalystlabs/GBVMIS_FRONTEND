@@ -26,7 +26,11 @@ export function LoginForm() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  const { login } = useAuth() // Provides login and authentication state
+  const { login } = useAuth() 
+  
+
+
+ 
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -40,7 +44,9 @@ export function LoginForm() {
     setIsLoading(true)
     // Calls the login API, stores tokens, and updates context
     try {
-      await login(values.email, values.password)
+      const res = await login(values.email, values.password)
+      console.log(res)
+     
       router.push("/dashboard") // Redirect after successful login
     } catch (error: any) {
       toast({

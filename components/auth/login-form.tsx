@@ -38,20 +38,78 @@ export function LoginForm() {
     },
   })
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsLoading(true)
-    // Calls the login API, stores tokens, and updates context
-    try {
-      const res = await login(values.email, values.password)
-      console.log(res)
-     
-      router.push("/dashboard") // Redirect after successful login
-    } catch (error: any) {
-      toast.error(error?.message || "Invalid credentials. Please try again.") // Display error message if login fails
-    } finally {
-      setIsLoading(false) // Reset loading state after login attempt
-    }
+//   async function onSubmit(values: z.infer<typeof formSchema>) {
+//   setIsLoading(true)
+
+//   try {
+//     const res = await login(values.email, values.password)
+//     console.log("Login response:", res)
+
+//     toast({
+//       title: "Login Successful",
+//       description: "You are being redirected to your dashboard...",
+//       variant: "default",
+//       duration: 2000, // Optional: makes it more visible
+//     })
+
+//     // Delay to allow toast to display before redirect
+//     await new Promise((resolve) => setTimeout(resolve, 200))
+
+//     router.push("/dashboard")
+//   } catch (error: any) {
+//     console.error("Login failed:", error)
+
+//     toast({
+//       title: "Login failed",
+//       description: error?.message || "Invalid credentials. Please try again.",
+//       variant: "destructive",
+//     })
+//   } finally {
+//     setIsLoading(false)
+//   }
+// }
+
+async function onSubmit(values: z.infer<typeof formSchema>) {
+  setIsLoading(true)
+
+  try {
+    const res = await login(values.email, values.password)
+    console.log("Login successful", res)
+
+    // Show toast notification
+    toast.success("🦄 Login Successful! Redirecting to dashboard...", {
+      position: "top-right",
+      autoClose: 2000,
+      hideProgressBar: false,
+      closeOnClick: false,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      theme: "light",
+      // transition: Bounce,
+    })
+
+
+    router.push("/dashboard")
+  } catch (error: any) {
+    console.error("Login failed:", error)
+
+    toast.error("Login failed: " + (error?.message || "Invalid credentials."), {
+      position: "top-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: false,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      theme: "light",
+      // transition: Bounce,
+    })
+  } finally {
+    setIsLoading(false)
   }
+}
+
 
 
 

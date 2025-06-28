@@ -119,4 +119,33 @@ export const apiClient = {
       },
     });
   },
+
+  postFormData: async <TResponse = any>(
+    path: string,
+    formData: FormData
+  ): Promise<TResponse> => {
+    const token = getToken();
+    return handleRequest(path, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        // Do NOT set Content-Type; browser will set it with boundary
+      },
+      body: formData,
+    });
+  },
+  putFormData: async <TResponse = any>(
+    path: string,
+    formData: FormData
+  ): Promise<TResponse> => {
+    const token = getToken();
+    return handleRequest(path, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        // Do NOT set Content-Type; browser will set it with boundary
+      },
+      body: formData,
+    });
+  }
 };

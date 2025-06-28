@@ -30,9 +30,6 @@ export function LoginForm() {
   const { login } = useAuth() 
   
 
-
- 
-
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -50,16 +47,12 @@ export function LoginForm() {
      
       router.push("/dashboard") // Redirect after successful login
     } catch (error: any) {
-      toast({
-        title: "Login failed",
-        description: error?.message || "Invalid credentials. Please try again.",
-        variant: "destructive",
-      }) // Display error message if login fails
+      toast.error(error?.message || "Invalid credentials. Please try again.") // Display error message if login fails
     } finally {
       setIsLoading(false) // Reset loading state after login attempt
     }
   }
-}
+
 
 
   return (

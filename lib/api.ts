@@ -1,3 +1,5 @@
+"use client"
+
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://clims.health.go.ug/api";
 
 const withBaseUrl = (path: string) =>
@@ -59,9 +61,11 @@ const handleRequest = async (
   }
 
   if (!res.ok) {
+    const info = await res.json().catch(() => ({})); // Handle JSON parse errors
     const error = new Error("An error occurred while fetching the data.");
-    (error as any).info = await res.json();
+    (error as any).info = info;
     (error as any).status = res.status;
+    console.error(`Request failed with status ${res.status}:`, info);
     throw error;
   }
 
@@ -115,6 +119,127 @@ export const apiClient = {
     return handleRequest(path, {
       method: "DELETE",
       headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  },
+
+  postFormData: async <TResponse = any>(
+    path: string,
+    formData: FormData
+  ): Promise<TResponse> => {
+    const token = getToken();
+    return handleRequest(path, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        // Do NOT set Content-Type; browser will set it with boundary
+      },
+      body: formData,
+    });
+  },
+
+  putFormData: async <TResponse = any>(
+    path: string,
+    formData: FormData
+  ): Promise<TResponse> => {
+    const token = getToken();
+    return handleRequest(path, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        // Do NOT set Content-Type; browser will set it with boundary
+      },
+      body: formData,
+    });
+  },
+
+  // Create a new case record
+  createCase: async <TBody extends Record<string, any>, TResponse = any>(
+    body: TBody
+  ): Promise<TResponse> => {
+    const token = getToken();
+    return handleRequest("/case", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(body),
+    });
+  },
+
+  // Retrieve a single case record by ID
+  getCaseById: async <TResponse = any>(id: number | string): Promise<TResponse> => {
+    const token = getToken();
+    return handleRequest(`/case/${id}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  },
+
+  // Update an existing case record by ID
+  updateCase: async <TBody extends Record<string, any>, TResponse = any>(
+    id: number | string,
+    body: TBody
+  ): Promise<TResponse> => {
+    const token = getToken();
+    return handleRequest(`/case/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(body),
+    });
+  },
+
+  // Delete a case record by ID
+  deleteCase: async <TResponse = any>(id: number | string): Promise<TResponse> => {
+    const token = getToken();
+    return handleRequest(`/case/${id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  },
+
+  // Retrieve a paginated list of cases
+  getCases: async <TResponse = any>(
+    params: { page?: number; pageSize?: number } = {}
+  ): Promise<TResponse> => {
+    const token = getToken();
+    const query = new URLSearchParams({
+      page: params.page?.toString() || "1",
+      pageSize: params.pageSize?.toString() || "10",
+    }).toString();
+    return handleRequest(`/cases?${query}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  },
+
+  // Search for cases with pagination
+  searchCases: async <TResponse = any>(
+    params: { search?: string; page?: number; pageSize?: number } = {}
+  ): Promise<TResponse> => {
+    const token = getToken();
+    const query = new URLSearchParams({
+      search: params.search || "",
+      page: params.page?.toString() || "1",
+      pageSize: params.pageSize?.toString() || "10",
+    }).toString();
+    return handleRequest(`/cases/search?${query}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
     });

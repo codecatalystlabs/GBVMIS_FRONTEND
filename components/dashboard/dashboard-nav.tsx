@@ -1,10 +1,9 @@
 "use client"
 
 import type React from "react"
-
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Users, Briefcase, Phone, BarChart3, Settings, HelpCircle, ChevronRight } from "lucide-react"
+import { Home, Users, Briefcase, Phone, BarChart3, Settings, HelpCircle, ChevronRight, FileText } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -20,46 +19,17 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  {
-    title: "Dashboard",
-    href: "/dashboard",
-    icon: Home,
-  },
-  {
-    title: "Police Officer",
-    href: "/dashboard/police-officer",
-    icon: Users,
-  },
-  {
-    title: "Police Posts",
-    href: "/dashboard/policePosts",
-    icon: Briefcase,
-  },
-  {
-    title: "Accounts",
-    href: "/dashboard/accounts",
-    icon: Briefcase,
-  },
-  {
-    title: "Contacts",
-    href: "/dashboard/contacts",
-    icon: Phone,
-  },
-  {
-    title: "Reports",
-    href: "/dashboard/reports",
-    icon: BarChart3,
-  },
-  {
-    title: "Settings",
-    href: "/dashboard/settings",
-    icon: Settings,
-  },
-  {
-    title: "Help",
-    href: "/dashboard/help",
-    icon: HelpCircle,
-  },
+  { title: "Dashboard", href: "/dashboard", icon: Home },
+  { title: "Police Officer", href: "/dashboard/police-officer", icon: Users },
+  { title: "Police Posts", href: "/dashboard/police-posts", icon: Briefcase },
+  { title: "Cases", href: "/dashboard/cases", icon: FileText }, // Added Cases
+  { title: "Victims", href: "/dashboard/victims", icon: Users },
+  { title: "Suspects", href: "/dashboard/suspects", icon: Briefcase },
+  { title: "Facilities", href: "/dashboard/facilities", icon: Briefcase },
+  { title: "Health Practitioners", href: "/dashboard/health-practitioners", icon: Phone },
+  { title: "Reports", href: "/dashboard/reports", icon: BarChart3 },
+  { title: "Settings", href: "/dashboard/settings", icon: Settings },
+  { title: "Help", href: "/dashboard/help", icon: HelpCircle },
 ]
 
 export function DashboardNav() {
@@ -70,8 +40,9 @@ export function DashboardNav() {
   // Update the close function to check if we're in the settings page
   const isSettingsPage = pathname.includes("/dashboard/settings")
 
-  // Handle navigation click - only close sidebar on mobile
-  const handleNavClick = () => {
+  // Handle navigation click with debugging
+  const handleNavClick = (href: string) => {
+    console.log(`Navigating to: ${href}`) // Debug log
     if (isMobile) {
       close()
     }
@@ -79,12 +50,11 @@ export function DashboardNav() {
 
   return (
     <>
-      {/* Overlay for mobile - don't close automatically in settings page */}
+      {/* Overlay for mobile */}
       {isOpen && (
         <div
           className="fixed inset-0 z-20 bg-background/80 backdrop-blur-sm md:hidden"
           onClick={(e) => {
-            // Prevent closing if we're in settings page and clicking on a form element
             if (isSettingsPage && (e.target as HTMLElement).closest('form, button, [role="tablist"]')) {
               e.stopPropagation()
               return
@@ -98,14 +68,12 @@ export function DashboardNav() {
         className={cn(
           "fixed inset-y-0 left-0 z-20 flex flex-col border-r bg-background transition-all duration-300 md:sticky",
           isOpen ? "translate-x-0" : "-translate-x-full",
-          isCollapsed ? "md:w-[70px]" : "w-64",
+          isCollapsed ? "md:w-[70px]" : "w-64"
         )}
       >
+        {/* Logo Section */}
         <div className={cn("flex h-16 items-center border-b px-4", isCollapsed && "justify-center px-0")}>
-          <Link
-            href="/dashboard"
-            className={cn("flex items-center gap-2 font-semibold", isCollapsed && "justify-center")}
-          >
+          <Link href="/dashboard" className={cn("flex items-center gap-2 font-semibold", isCollapsed && "justify-center")}>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -121,6 +89,7 @@ export function DashboardNav() {
             {!isCollapsed && <span>Admin Dashboard</span>}
           </Link>
         </div>
+
         <ScrollArea className="flex-1 py-2">
           <nav className={cn("grid gap-1", isCollapsed ? "px-1" : "px-2")}>
             <TooltipProvider delayDuration={0}>
@@ -132,11 +101,11 @@ export function DashboardNav() {
                     className={cn(
                       "flex h-10 items-center justify-start gap-2 px-4 text-sm font-medium",
                       pathname === item.href ? "bg-secondary" : "hover:bg-accent",
-                      isCollapsed && "justify-center px-0",
+                      isCollapsed && "justify-center px-0"
                     )}
                     asChild
                   >
-                    <Link href={item.href} onClick={handleNavClick}>
+                    <Link href={item.href} onClick={() => handleNavClick(item.href)}>
                       <item.icon className="h-5 w-5" />
                       {!isCollapsed && (
                         <>
@@ -188,4 +157,3 @@ export function DashboardNav() {
     </>
   )
 }
-

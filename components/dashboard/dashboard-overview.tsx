@@ -1,226 +1,184 @@
-"use client"
+'use client';
 
-import { Users, DollarSign, ArrowUpRight, ArrowDownRight, Briefcase, Phone } from "lucide-react"
+import {
+  Users,
+  DollarSign,
+  ArrowUpRight,
+  ArrowDownRight,
+  Briefcase,
+  Phone,
+  Shield,
+  Hospital,
+  FileText,
+  UserCheck,
+  MapPin,
+  Gavel,
+} from 'lucide-react';
+import useSWR from 'swr';
 
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { RecentActivities } from "@/components/dashboard/recent-activities"
-import { SalesChart } from "@/components/dashboard/sales-chart"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { RecentActivities } from '@/components/dashboard/recent-activities';
+import { SalesChart } from '@/components/dashboard/sales-chart';
+import { fetcher } from '@/lib/api';
 
 export function DashboardOverview() {
+  // Fetch counts for each entity
+  const { data: victimsData } = useSWR('/victims', fetcher);
+  const { data: casesData } = useSWR('/cases', fetcher);
+  const { data: suspectsData } = useSWR('/suspects', fetcher);
+  const { data: officersData } = useSWR('/police-officers', fetcher);
+  const { data: facilitiesData } = useSWR('/health-facilities', fetcher);
+  const { data: examinationsData } = useSWR('/examinations', fetcher);
+  const { data: postsData } = useSWR('/police-posts', fetcher);
+  const { data: chargesData } = useSWR('/charges', fetcher);
+
+  const victimsCount = victimsData?.data?.length || 0;
+  const casesCount = casesData?.data?.length || 0;
+  const suspectsCount = suspectsData?.data?.length || 0;
+  const officersCount = officersData?.data?.length || 0;
+  const facilitiesCount = facilitiesData?.data?.length || 0;
+  const examinationsCount = examinationsData?.data?.length || 0;
+  const postsCount = postsData?.data?.length || 0;
+  const chargesCount = chargesData?.data?.length || 0;
+
+  // Prepare cases per police post for a simple bar chart
+  let casesPerPost: Record<string, number> = {};
+  if (casesData?.data && postsData?.data) {
+    postsData.data.forEach((post: any) => {
+      casesPerPost[post.name] = 0;
+    });
+    casesData.data.forEach((c: any) => {
+      const post = postsData.data.find(
+        (p: any) => p.id === c.police_post_id || p.ID === c.police_post_id
+      );
+      if (post) {
+        casesPerPost[post.name] = (casesPerPost[post.name] || 0) + 1;
+      }
+    });
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Police Posts</CardTitle>
+            <MapPin className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$45,231.89</div>
-            <div className="flex items-center space-x-1 text-xs text-muted-foreground">
-              <ArrowUpRight className="h-3 w-3 text-emerald-500" />
-              <span className="text-emerald-500">+20.1%</span>
-              <span>from last month</span>
-            </div>
+            <div className="text-2xl font-bold">{postsCount}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">New Leads</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Police Officers
+            </CardTitle>
+            <Shield className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{officersCount}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Cases</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{casesCount}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Victims</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+2,350</div>
-            <div className="flex items-center space-x-1 text-xs text-muted-foreground">
-              <ArrowUpRight className="h-3 w-3 text-emerald-500" />
-              <span className="text-emerald-500">+18.2%</span>
-              <span>from last month</span>
-            </div>
+            <div className="text-2xl font-bold">{victimsCount}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Accounts</CardTitle>
+            <CardTitle className="text-sm font-medium">Suspects</CardTitle>
+            <UserCheck className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{suspectsCount}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Charges</CardTitle>
+            <Gavel className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{chargesCount}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Health Facilities
+            </CardTitle>
+            <Hospital className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{facilitiesCount}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Examinations</CardTitle>
             <Briefcase className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+12,234</div>
-            <div className="flex items-center space-x-1 text-xs text-muted-foreground">
-              <ArrowDownRight className="h-3 w-3 text-rose-500" />
-              <span className="text-rose-500">-2.5%</span>
-              <span>from last month</span>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">New Contacts</CardTitle>
-            <Phone className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">+573</div>
-            <div className="flex items-center space-x-1 text-xs text-muted-foreground">
-              <ArrowUpRight className="h-3 w-3 text-emerald-500" />
-              <span className="text-emerald-500">+4.3%</span>
-              <span>from last month</span>
-            </div>
+            <div className="text-2xl font-bold">{examinationsCount}</div>
           </CardContent>
         </Card>
       </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="lg:col-span-4">
-          <CardHeader>
-            <CardTitle>Sales Overview</CardTitle>
-          </CardHeader>
-          <CardContent className="pl-2">
-            <SalesChart />
-          </CardContent>
-        </Card>
-        <Card className="lg:col-span-3">
-          <CardHeader>
-            <CardTitle>Recent Activities</CardTitle>
-            <CardDescription>Latest activities across your accounts</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <RecentActivities />
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="lg:col-span-4">
-          <CardHeader>
-            <CardTitle>Sales Targets</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+      {/* Simple bar chart for cases per police post */}
+      {Object.keys(casesPerPost).length > 0 && (
+        <div className="mt-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>Cases per Police Post</CardTitle>
+            </CardHeader>
+            <CardContent>
               <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <div className="font-medium">Q1 Goals</div>
-                  <div>75%</div>
-                </div>
-                <Progress value={75} />
+                {Object.entries(casesPerPost).map(([post, count]) => (
+                  <div key={post} className="flex items-center gap-2">
+                    <div className="w-40 truncate text-sm">{post}</div>
+                    <div className="flex-1 bg-muted h-3 rounded">
+                      <div
+                        className="bg-primary h-3 rounded"
+                        style={{
+                          width: `${Math.max(
+                            5,
+                            (count / Math.max(...Object.values(casesPerPost))) *
+                              100
+                          )}%`,
+                        }}
+                      ></div>
+                    </div>
+                    <div className="w-8 text-right text-sm">{count}</div>
+                  </div>
+                ))}
               </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <div className="font-medium">Q2 Goals</div>
-                  <div>45%</div>
-                </div>
-                <Progress value={45} />
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <div className="font-medium">Q3 Goals</div>
-                  <div>20%</div>
-                </div>
-                <Progress value={20} />
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <div className="font-medium">Q4 Goals</div>
-                  <div>0%</div>
-                </div>
-                <Progress value={0} />
-              </div>
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button variant="outline" className="w-full">
-              View Detailed Report
-            </Button>
-          </CardFooter>
-        </Card>
-        <Card className="lg:col-span-3">
-          <CardHeader>
-            <CardTitle>Performance</CardTitle>
-          </CardHeader>
-          <CardContent className="pb-2">
-            <Tabs defaultValue="leads">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="leads">Leads</TabsTrigger>
-                <TabsTrigger value="opportunities">Opportunities</TabsTrigger>
-                <TabsTrigger value="accounts">Accounts</TabsTrigger>
-              </TabsList>
-              <TabsContent value="leads" className="space-y-4 pt-4">
-                <div className="grid gap-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="font-medium">New Leads</div>
-                    </div>
-                    <div>2,350</div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="font-medium">Qualified Leads</div>
-                    </div>
-                    <div>1,423</div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="font-medium">Conversion Rate</div>
-                    </div>
-                    <div>60.5%</div>
-                  </div>
-                </div>
-              </TabsContent>
-              <TabsContent value="opportunities" className="space-y-4 pt-4">
-                <div className="grid gap-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="font-medium">Open Opportunities</div>
-                    </div>
-                    <div>1,567</div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="font-medium">Closed Won</div>
-                    </div>
-                    <div>892</div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="font-medium">Win Rate</div>
-                    </div>
-                    <div>56.9%</div>
-                  </div>
-                </div>
-              </TabsContent>
-              <TabsContent value="accounts" className="space-y-4 pt-4">
-                <div className="grid gap-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="font-medium">Total Accounts</div>
-                    </div>
-                    <div>12,234</div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="font-medium">Active Accounts</div>
-                    </div>
-                    <div>10,456</div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="font-medium">Retention Rate</div>
-                    </div>
-                    <div>85.5%</div>
-                  </div>
-                </div>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-          <CardFooter>
-            <Button variant="outline" className="w-full">
-              View All Metrics
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
-  )
+  );
 }
-

@@ -57,10 +57,10 @@ export function SearchableMultiSelect({
     onChange([]);
   };
 
-  const getSelectedLabels = () => {
+  const getSelectedOptions = () => {
     return selectedValues
-      .map((value) => options.find((opt) => opt.value === value)?.label)
-      .filter(Boolean);
+      .map((value) => options.find((opt) => opt.value === value))
+      .filter(Boolean) as Option[];
   };
 
   return (
@@ -127,16 +127,16 @@ export function SearchableMultiSelect({
             </Button>
           </div>
           <div className="flex flex-wrap gap-2">
-            {getSelectedLabels().map((label, index) => (
+            {getSelectedOptions().map((option) => (
               <Badge
-                key={selectedValues[index]}
+                key={option.value}
                 variant="secondary"
                 className="flex items-center gap-1"
               >
-                {label}
+                {option.label}
                 <X
                   className="h-3 w-3 cursor-pointer hover:text-destructive"
-                  onClick={() => handleRemove(selectedValues[index])}
+                  onClick={() => handleRemove(option.value)}
                 />
               </Badge>
             ))}

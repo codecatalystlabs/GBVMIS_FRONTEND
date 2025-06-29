@@ -88,7 +88,9 @@ export function VictimsTable() {
     if (selectedVictims.length === victims.length) {
       setSelectedVictims([]);
     } else {
-      setSelectedVictims(victims.map((victim) => victim.id));
+      setSelectedVictims(
+        victims.map((victim: { ID: number }) => victim.ID.toString())
+      );
     }
   };
 
@@ -104,7 +106,7 @@ export function VictimsTable() {
     e.preventDefault();
     setFormLoading(true);
     try {
-      await apiClient.post('/victims', victimForm);
+      await apiClient.post('/victim', victimForm);
       setAddDialogOpen(false);
       setVictimForm({
         address: '',
@@ -313,19 +315,25 @@ export function VictimsTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {victims.map((victim) => (
-              <TableRow key={victim.id}>
+            {victims.map((victim: any) => (
+              <TableRow key={victim.ID}>
                 <TableCell>
                   <Checkbox
-                    checked={selectedVictims.includes(victim.id)}
-                    onCheckedChange={() => toggleSelectVictim(victim.id)}
+                    checked={selectedVictims.includes(victim.ID.toString())}
+                    onCheckedChange={() =>
+                      toggleSelectVictim(victim.ID.toString())
+                    }
                   />
                 </TableCell>
-                <TableCell className="font-medium">{victim.id}</TableCell>
-                <TableCell>{victim.firstName}</TableCell>
-                <TableCell>{victim.lastName}</TableCell>
+                <TableCell className="font-medium">{victim.ID}</TableCell>
+                <TableCell>{victim.first_name}</TableCell>
+                <TableCell>{victim.last_name}</TableCell>
                 <TableCell>{victim.gender}</TableCell>
-                <TableCell>{victim.dob}</TableCell>
+                <TableCell>
+                  {victim.dob ? new Date(victim.dob).toLocaleDateString() : ''}
+                </TableCell>
+                <TableCell>{victim.status || ''}</TableCell>
+                <TableCell>{victim.created_by}</TableCell>
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>

@@ -27,7 +27,8 @@ export function LoginForm() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  const { login } = useAuth() // Provides login and authentication state
+  const { login } = useAuth() 
+  
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -88,8 +89,6 @@ async function onSubmit(values: z.infer<typeof formSchema>) {
       // transition: Bounce,
     })
 
-    // Wait 2 seconds before redirecting to allow the toast to be seen
-    await new Promise((resolve) => setTimeout(resolve, 2000))
 
     router.push("/dashboard")
   } catch (error: any) {
@@ -110,6 +109,8 @@ async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(false)
   }
 }
+
+
 
 
   return (

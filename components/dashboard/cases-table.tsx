@@ -75,6 +75,8 @@ export function CasesTable() {
     '/victims',
     fetcher
   );
+  const { data: chargesData } = useSWR('/charges', fetcher);
+  const allCharges = chargesData?.data || [];
 
   // Fetch cases with pagination and search
   const { data, error, isLoading, mutate } = useSWR(
@@ -92,8 +94,8 @@ export function CasesTable() {
   // Data for selects - filter out items without valid IDs
   const officers = officersData?.data || [];
   const posts = postsData?.data || [];
-  const suspects = (suspectsData?.data || []).filter((s: any) => s?.id != null);
-  const victims = (victimsData?.data || []).filter((v: any) => v?.id != null);
+  const suspects = (suspectsData?.data || []).filter((s: any) => s?.ID != null);
+  const victims = (victimsData?.data || []).filter((v: any) => v?.ID != null);
 
   // Table selection
   const toggleSelectAll = () => {
@@ -120,7 +122,7 @@ export function CasesTable() {
     suspect_ids: [],
     victim_ids: [],
     description: '',
-    charges: '',
+    charges: [],
   });
   const [editForm, setEditForm] = useState<any>(null);
 
@@ -139,13 +141,30 @@ export function CasesTable() {
     e.preventDefault();
     setFormLoading(true);
     try {
+      const formatDateToISO = (dateStr: string) => {
+        if (dateStr.includes('T')) return dateStr;
+        return `${dateStr}T00:00:00Z`;
+      };
       const payload = {
         ...addForm,
         officer_id: Number(addForm.officer_id),
         police_post_id: Number(addForm.police_post_id),
         suspect_ids: addForm.suspect_ids,
         victim_ids: addForm.victim_ids,
-        charges: JSON.parse(addForm.charges || '[]'),
+        charges: Array.isArray(addForm.charges)
+          ? allCharges
+              .filter((c: any) =>
+                (addForm.charges as (string | undefined | null)[])
+                  .filter((id): id is string => typeof id === 'string')
+                  .includes(String(c.ID ?? ''))
+              )
+              .map((c: any) => ({
+                charge_title: c.charge_title,
+                description: c.description,
+                severity: c.severity,
+              }))
+          : [],
+        date_opened: formatDateToISO(addForm.date_opened),
       };
       await apiClient.post('/case', payload);
       toast.success('Case added successfully!');
@@ -160,7 +179,7 @@ export function CasesTable() {
         suspect_ids: [],
         victim_ids: [],
         description: '',
-        charges: '',
+        charges: [],
       });
       mutate();
     } catch (err: any) {
@@ -175,13 +194,30 @@ export function CasesTable() {
     if (!editForm || !selectedCase) return;
     setFormLoading(true);
     try {
+      const formatDateToISO = (dateStr: string) => {
+        if (dateStr.includes('T')) return dateStr;
+        return `${dateStr}T00:00:00Z`;
+      };
       const payload = {
         ...editForm,
         officer_id: Number(editForm.officer_id),
         police_post_id: Number(editForm.police_post_id),
         suspect_ids: editForm.suspect_ids,
         victim_ids: editForm.victim_ids,
-        charges: JSON.parse(editForm.charges || '[]'),
+        charges: Array.isArray(editForm.charges)
+          ? allCharges
+              .filter((c: any) =>
+                (editForm.charges as (string | undefined | null)[])
+                  .filter((id): id is string => typeof id === 'string')
+                  .includes(String(c.ID ?? ''))
+              )
+              .map((c: any) => ({
+                charge_title: c.charge_title,
+                description: c.description,
+                severity: c.severity,
+              }))
+          : [],
+        date_opened: formatDateToISO(editForm.date_opened),
       };
       await apiClient.put(`/case/${selectedCase.id}`, payload);
       toast.success('Case updated successfully!');
@@ -207,7 +243,11 @@ export function CasesTable() {
     setSelectedCase(c);
     setEditForm({
       ...c,
-      charges: JSON.stringify(c.charges || []),
+      charges: Array.isArray(c.charges)
+        ? c.charges
+            .filter((charge: any) => charge?.ID != null)
+            .map((charge: any) => charge.ID.toString())
+        : [],
       suspect_ids: Array.isArray(c.suspect_ids)
         ? c.suspect_ids.filter(
             (id) => typeof id === 'string' || typeof id === 'number'
@@ -250,11 +290,13 @@ export function CasesTable() {
   if (error) return <div>Error loading cases</div>;
 
   // Helper functions
-  const getOfficerName = (id: number) => {
+  const getOfficerName = (id: number | string | undefined) => {
+    if (typeof id !== 'number') return '-';
     const o = officers.find((x: any) => x.id === id);
     return o ? `${o.first_name} ${o.last_name}` : '-';
   };
-  const getPostName = (id: number) => {
+  const getPostName = (id: number | string | undefined) => {
+    if (typeof id !== 'number') return '-';
     const p = posts.find((x: any) => x.id === id);
     return p ? p.name : '-';
   };
@@ -358,7 +400,7 @@ export function CasesTable() {
                   {Array.isArray(c.suspect_ids) && c.suspect_ids.length > 0
                     ? c.suspect_ids
                         .map((sid) => {
-                          const s = suspects.find((sus: any) => sus.id === sid);
+                          const s = suspects.find((sus: any) => sus.ID === sid);
                           return s ? `${s.first_name} ${s.last_name}` : sid;
                         })
                         .join(', ')
@@ -435,7 +477,10 @@ export function CasesTable() {
           <DialogHeader>
             <DialogTitle>Add Case</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleAddCase} className="space-y-4">
+          <form
+            onSubmit={handleAddCase}
+            className="space-y-4 max-h-[70vh] overflow-y-auto"
+          >
             <Input
               name="case_number"
               placeholder="Case Number"
@@ -506,10 +551,8 @@ export function CasesTable() {
             <SearchableMultiSelect
               label="Suspects"
               options={suspects.map((s: any) => ({
-                value: s.id.toString(),
-                label: `${s.first_name || s.firstName} ${
-                  s.last_name || s.lastName
-                }`,
+                value: s.ID.toString(),
+                label: `${s.first_name} ${s.last_name}`,
               }))}
               selectedValues={
                 Array.isArray(addForm.suspect_ids)
@@ -521,32 +564,28 @@ export function CasesTable() {
                       .map((id: any) => id.toString())
                   : []
               }
-              onChange={(values: string[]) =>
+              onChange={(values) =>
                 setAddForm((f: any) => ({
                   ...f,
-                  suspect_ids: values.map((v: string) => {
+                  suspect_ids: (values as string[]).map((v) => {
                     const found = suspects.find(
-                      (s: any) => s.id.toString() === v
+                      (s: any) => s.ID.toString() === v
                     );
-                    return found ? found.id : v;
+                    return found ? found.ID : v;
                   }),
                 }))
               }
               placeholder={
-                suspects.length === 0
-                  ? 'Loading suspects...'
-                  : 'Select suspects...'
+                !suspectsData ? 'Loading suspects...' : 'Select suspects...'
               }
-              disabled={suspects.length === 0}
+              disabled={!suspectsData}
             />
             {/* Victims Multi-Select */}
             <SearchableMultiSelect
               label="Victims"
               options={victims.map((v: any) => ({
-                value: v.id.toString(),
-                label: `${v.first_name || v.firstName} ${
-                  v.last_name || v.lastName
-                }`,
+                value: v.ID.toString(),
+                label: `${v.first_name} ${v.last_name}`,
               }))}
               selectedValues={
                 Array.isArray(addForm.victim_ids)
@@ -558,23 +597,21 @@ export function CasesTable() {
                       .map((id: any) => id.toString())
                   : []
               }
-              onChange={(values: string[]) =>
+              onChange={(values) =>
                 setAddForm((f: any) => ({
                   ...f,
-                  victim_ids: values.map((v: string) => {
+                  victim_ids: (values as string[]).map((v) => {
                     const found = victims.find(
-                      (vic: any) => vic.id.toString() === v
+                      (vic: any) => vic.ID.toString() === v
                     );
-                    return found ? found.id : v;
+                    return found ? found.ID : v;
                   }),
                 }))
               }
               placeholder={
-                victims.length === 0
-                  ? 'Loading victims...'
-                  : 'Select victims...'
+                !victimsData ? 'Loading victims...' : 'Select victims...'
               }
-              disabled={victims.length === 0}
+              disabled={!victimsData}
             />
             <Input
               name="description"
@@ -583,12 +620,31 @@ export function CasesTable() {
               onChange={handleAddChange}
               required
             />
-            <Input
-              name="charges"
-              placeholder='Charges (JSON: [{"charge_title":"...","description":"...","severity":"..."}])'
-              value={addForm.charges}
-              onChange={handleAddChange}
-              required
+            <SearchableMultiSelect
+              label="Charges"
+              options={allCharges
+                .filter((charge: any) => charge?.ID != null) // Use uppercase ID
+                .map((charge: any) => ({
+                  value: charge.ID.toString(),
+                  label: `${charge.charge_title} (${charge.severity})`,
+                }))}
+              selectedValues={
+                Array.isArray(addForm.charges)
+                  ? addForm.charges
+                      .filter((id: any) => id != null && id !== '') // Filter out null/undefined/empty values
+                      .map((id: any) => String(id)) // Ensure string conversion
+                  : []
+              }
+              onChange={(values) =>
+                setAddForm((f: any) => ({
+                  ...f,
+                  charges: values.filter((v: string) => v && v.trim() !== ''), // Filter out empty strings
+                }))
+              }
+              placeholder={
+                !chargesData ? 'Loading charges...' : 'Select charges...'
+              }
+              disabled={!chargesData}
             />
             <DialogFooter className="mt-4">
               <DialogClose asChild>
@@ -614,7 +670,10 @@ export function CasesTable() {
           <DialogHeader>
             <DialogTitle>Edit Case</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleEditCase} className="space-y-4">
+          <form
+            onSubmit={handleEditCase}
+            className="!px-1 space-y-4 max-h-[70vh] overflow-y-auto"
+          >
             <Input
               name="case_number"
               placeholder="Case Number"
@@ -685,63 +744,64 @@ export function CasesTable() {
             <SearchableMultiSelect
               label="Suspects"
               options={suspects.map((s: any) => ({
-                value: s.id.toString(),
-                label: `${s.first_name || s.firstName} ${
-                  s.last_name || s.lastName
-                }`,
+                value: s.ID.toString(),
+                label: `${s.first_name} ${s.last_name}`,
               }))}
               selectedValues={
-                Array.isArray(editForm?.suspect_ids)
-                  ? editForm.suspect_ids
-                      .filter(
-                        (id) => typeof id === 'string' || typeof id === 'number'
-                      )
-                      .map((id) => id.toString())
+                Array.isArray(editForm?.charges)
+                  ? editForm.charges
+                      .filter((id: any) => id != null) // Filter out null/undefined values
+                      .map((id: any) => id.toString())
                   : []
               }
-              onChange={(values: string[]) =>
+              onChange={(values) =>
                 setEditForm((f: any) => ({
                   ...f,
-                  suspect_ids: values.map((v: string) => {
+                  suspect_ids: (values as string[]).map((v) => {
                     const found = suspects.find(
-                      (s: any) => s.id.toString() === v
+                      (s: any) => s.ID.toString() === v
                     );
-                    return found ? found.id : v;
+                    return found ? found.ID : v;
                   }),
                 }))
               }
-              placeholder="Select suspects..."
+              placeholder={
+                !suspectsData ? 'Loading suspects...' : 'Select suspects...'
+              }
+              disabled={!suspectsData}
             />
             {/* Victims Multi-Select */}
             <SearchableMultiSelect
               label="Victims"
               options={victims.map((v: any) => ({
-                value: v.id.toString(),
-                label: `${v.first_name || v.firstName} ${
-                  v.last_name || v.lastName
-                }`,
+                value: v.ID.toString(),
+                label: `${v.first_name} ${v.last_name}`,
               }))}
               selectedValues={
                 Array.isArray(editForm?.victim_ids)
                   ? editForm.victim_ids
                       .filter(
-                        (id) => typeof id === 'string' || typeof id === 'number'
+                        (id: any) =>
+                          typeof id === 'string' || typeof id === 'number'
                       )
-                      .map((id) => id.toString())
+                      .map((id: any) => id.toString())
                   : []
               }
-              onChange={(values: string[]) =>
+              onChange={(values) =>
                 setEditForm((f: any) => ({
                   ...f,
-                  victim_ids: values.map((v: string) => {
+                  victim_ids: (values as string[]).map((v) => {
                     const found = victims.find(
-                      (vic: any) => vic.id.toString() === v
+                      (vic: any) => vic.ID.toString() === v
                     );
-                    return found ? found.id : v;
+                    return found ? found.ID : v;
                   }),
                 }))
               }
-              placeholder="Select victims..."
+              placeholder={
+                !victimsData ? 'Loading victims...' : 'Select victims...'
+              }
+              disabled={!victimsData}
             />
             <Input
               name="description"
@@ -750,12 +810,31 @@ export function CasesTable() {
               onChange={handleEditChange}
               required
             />
-            <Input
-              name="charges"
-              placeholder='Charges (JSON: [{"charge_title":"...","description":"...","severity":"..."}])'
-              value={editForm?.charges || ''}
-              onChange={handleEditChange}
-              required
+            <SearchableMultiSelect
+              label="Charges"
+              options={allCharges
+                .filter((charge: any) => charge?.ID != null)
+                .map((charge: any) => ({
+                  value: charge.ID?.toString(),
+                  label: `${charge.charge_title} (${charge.severity})`,
+                }))}
+              selectedValues={
+                Array.isArray(editForm?.charges)
+                  ? editForm.charges
+                      .filter((id: any) => id != null && id != '')
+                      .map((id: any) => String(id))
+                  : []
+              }
+              onChange={(values) =>
+                setEditForm((f: any) => ({
+                  ...f,
+                  charges: values.filter((v: string) => v && v.trim() !== ''),
+                }))
+              }
+              placeholder={
+                !chargesData ? 'Loading charges...' : 'Select charges...'
+              }
+              disabled={!chargesData}
             />
             <DialogFooter className="mt-4">
               <DialogClose asChild>
@@ -807,7 +886,7 @@ export function CasesTable() {
                 selectedCase.suspect_ids.length > 0
                   ? selectedCase.suspect_ids
                       .map((sid) => {
-                        const s = suspects.find((sus: any) => sus.id === sid);
+                        const s = suspects.find((sus: any) => sus.ID === sid);
                         return s ? `${s.first_name} ${s.last_name}` : sid;
                       })
                       .join(', ')

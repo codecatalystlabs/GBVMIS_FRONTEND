@@ -981,8 +981,8 @@ function ExaminationsList({ victimId }: { victimId: number }) {
     return <li className="text-muted-foreground">No examinations found.</li>;
   return (
     <>
-      {examinations.map((exam: any) => (
-        <li key={exam.ID}>
+      {examinations.map((exam: any, idx: number) => (
+        <li key={exam.ID ?? idx}>
           {exam.exam_date ? new Date(exam.exam_date).toLocaleDateString() : ''}{' '}
           - {exam.findings}
         </li>

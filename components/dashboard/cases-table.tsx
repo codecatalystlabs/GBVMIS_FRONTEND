@@ -397,17 +397,20 @@ export function CasesTable() {
                 <TableCell>{getOfficerName(c.officer_id)}</TableCell>
                 <TableCell>{getPostName(c.police_post_id)}</TableCell>
                 <TableCell>
-                  {Array.isArray(c.suspect_ids) && c.suspect_ids.length > 0
-                    ? c.suspect_ids
-                        .map((sid) => {
-                          const s = suspects.find((sus: any) => sus.ID === sid);
-                          return s ? `${s.first_name} ${s.last_name}` : sid;
-                        })
-                        .join(', ')
-                    : '-'}
+                  {/* Show total number of suspects */}
+                  {Array.isArray(c.suspects)
+                    ? c.suspects.length
+                    : Array.isArray(c.suspect_ids)
+                    ? c.suspect_ids.length
+                    : 0}
                 </TableCell>
                 <TableCell>
-                  {Array.isArray(c.victim_ids) ? c.victim_ids.length : 0}
+                  {/* Show total number of victims */}
+                  {Array.isArray(c.victims)
+                    ? c.victims.length
+                    : Array.isArray(c.victim_ids)
+                    ? c.victim_ids.length
+                    : 0}
                 </TableCell>
                 <TableCell>{c.status}</TableCell>
                 <TableCell>{c.date_opened}</TableCell>
@@ -881,36 +884,63 @@ export function CasesTable() {
                 <b>Police Post:</b> {getPostName(selectedCase.police_post_id)}
               </div>
               <div>
-                <b>Suspects:</b>{' '}
-                {Array.isArray(selectedCase.suspect_ids) &&
-                selectedCase.suspect_ids.length > 0
-                  ? selectedCase.suspect_ids
-                      .map((sid) => {
-                        const s = suspects.find((sus: any) => sus.ID === sid);
-                        return s ? `${s.first_name} ${s.last_name}` : sid;
-                      })
-                      .join(', ')
-                  : '-'}
+                <b>Suspects:</b>
+                {Array.isArray(selectedCase.suspects) &&
+                selectedCase.suspects.length > 0 ? (
+                  <ul className="list-disc ml-6">
+                    {selectedCase.suspects.map((suspect: any, idx: number) => (
+                      <li key={idx}>
+                        <b>
+                          {suspect.first_name} {suspect.last_name}
+                        </b>
+                        {suspect.gender && `, Gender: ${suspect.gender}`}
+                        {suspect.nin && `, NIN: ${suspect.nin}`}
+                        {suspect.address && `, Address: ${suspect.address}`}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <span>-</span>
+                )}
               </div>
               <div>
-                <b>Victims:</b>{' '}
-                {Array.isArray(selectedCase.victim_ids)
-                  ? selectedCase.victim_ids.length
-                  : 0}
+                <b>Victims:</b>
+                {Array.isArray(selectedCase.victims) &&
+                selectedCase.victims.length > 0 ? (
+                  <ul className="list-disc ml-6">
+                    {selectedCase.victims.map((victim: any, idx: number) => (
+                      <li key={idx}>
+                        <b>
+                          {victim.first_name} {victim.last_name}
+                        </b>
+                        {victim.gender && `, Gender: ${victim.gender}`}
+                        {victim.phone_number &&
+                          `, Phone: ${victim.phone_number}`}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <span>-</span>
+                )}
               </div>
               <div>
                 <b>Description:</b> {selectedCase.description}
               </div>
               <div>
                 <b>Charges:</b>
-                <ul className="list-disc ml-6">
-                  {selectedCase.charges?.map((charge, idx) => (
-                    <li key={idx}>
-                      <b>{charge.charge_title}</b>: {charge.description}{' '}
-                      (Severity: {charge.severity})
-                    </li>
-                  ))}
-                </ul>
+                {Array.isArray(selectedCase.charges) &&
+                selectedCase.charges.length > 0 ? (
+                  <ul className="list-disc ml-6">
+                    {selectedCase.charges.map((charge: any, idx: number) => (
+                      <li key={idx}>
+                        <b>{charge.charge_title}</b>: {charge.description}{' '}
+                        (Severity: {charge.severity})
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <span>-</span>
+                )}
               </div>
             </div>
           ) : (

@@ -114,6 +114,12 @@ export function VictimsTable() {
   const { data: facilitiesData } = useSWR('/health-facilities', fetcher);
   const facilities = facilitiesData?.data || [];
 
+  const { data: practitionersData } = useSWR('/health-practitioners', fetcher);
+  const practitioners = practitionersData?.data || [];
+
+  const { data: casesData } = useSWR('/cases', fetcher);
+  const cases = casesData?.data || [];
+
   const toggleSelectAll = () => {
     if (selectedVictims.length === victims.length) {
       setSelectedVictims([]);
@@ -831,13 +837,31 @@ export function VictimsTable() {
                 onSubmit={handleExaminationSubmit}
                 className="space-y-2 mt-2"
               >
-                <Input
-                  name="case_id"
-                  placeholder="Case ID"
-                  value={examinationForm.case_id}
-                  onChange={handleExaminationFormChange}
-                  required
-                />
+                <div>
+                  <label
+                    htmlFor="case_id"
+                    className="block text-sm font-medium"
+                  >
+                    Case
+                  </label>
+                  <select
+                    id="case_id"
+                    name="case_id"
+                    value={examinationForm.case_id}
+                    onChange={handleExaminationFormChange}
+                    required
+                    className="w-full border rounded px-2 py-1"
+                  >
+                    <option value="">Select case</option>
+                    {cases.map((c: any) => (
+                      <option key={c.id ?? c.ID} value={c.id ?? c.ID}>
+                        {c.case_number
+                          ? `${c.case_number} - ${c.title}`
+                          : c.id ?? c.ID}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <label className="flex items-center gap-2">
                   <input
                     type="checkbox"
@@ -879,17 +903,33 @@ export function VictimsTable() {
                     ))}
                   </select>
                 </div>
+                <div>
+                  <label
+                    htmlFor="practitioner_id"
+                    className="block text-sm font-medium"
+                  >
+                    Practitioner
+                  </label>
+                  <select
+                    id="practitioner_id"
+                    name="practitioner_id"
+                    value={examinationForm.practitioner_id}
+                    onChange={handleExaminationFormChange}
+                    required
+                    className="w-full border rounded px-2 py-1"
+                  >
+                    <option value="">Select practitioner</option>
+                    {practitioners.map((p: any) => (
+                      <option key={p.id ?? p.ID} value={p.id ?? p.ID}>
+                        {p.first_name} {p.last_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <Input
                   name="findings"
                   placeholder="Findings"
                   value={examinationForm.findings}
-                  onChange={handleExaminationFormChange}
-                  required
-                />
-                <Input
-                  name="practitioner_id"
-                  placeholder="Practitioner ID"
-                  value={examinationForm.practitioner_id}
                   onChange={handleExaminationFormChange}
                   required
                 />

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   Users,
@@ -13,8 +13,8 @@ import {
   UserCheck,
   MapPin,
   Gavel,
-} from 'lucide-react';
-import useSWR from 'swr';
+} from "lucide-react";
+import useSWR from "swr";
 
 import {
   Card,
@@ -23,24 +23,24 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { RecentActivities } from '@/components/dashboard/recent-activities';
-import { SalesChart } from '@/components/dashboard/sales-chart';
-import { fetcher } from '@/lib/api';
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RecentActivities } from "@/components/dashboard/recent-activities";
+import { SalesChart } from "@/components/dashboard/sales-chart";
+import { fetcher } from "@/lib/api";
 
 export function DashboardOverview() {
   // Fetch counts for each entity
-  const { data: victimsData } = useSWR('/victims', fetcher);
-  const { data: casesData } = useSWR('/cases', fetcher);
-  const { data: suspectsData } = useSWR('/suspects', fetcher);
-  const { data: officersData } = useSWR('/police-officers', fetcher);
-  const { data: facilitiesData } = useSWR('/health-facilities', fetcher);
-  const { data: examinationsData } = useSWR('/examinations', fetcher);
-  const { data: postsData } = useSWR('/police-posts', fetcher);
-  const { data: chargesData } = useSWR('/charges', fetcher);
+  const { data: victimsData } = useSWR("/victims", fetcher);
+  const { data: casesData } = useSWR("/cases", fetcher);
+  const { data: suspectsData } = useSWR("/suspects", fetcher);
+  const { data: officersData } = useSWR("/police-officers", fetcher);
+  const { data: facilitiesData } = useSWR("/health-facilities", fetcher);
+  const { data: examinationsData } = useSWR("/examinations", fetcher);
+  const { data: postsData } = useSWR("/police-posts", fetcher);
+  const { data: chargesData } = useSWR("/charges", fetcher);
 
   const victimsCount = victimsData?.data?.length || 0;
   const casesCount = casesData?.data?.length || 0;
@@ -68,110 +68,111 @@ export function DashboardOverview() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Police Posts</CardTitle>
-            <MapPin className="h-4 w-4 text-muted-foreground" />
+    <div className="flex flex-col gap-6 p-6 bg-gray-100 rounded-xl shadow-lg">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="border-blue-200">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-white">
+            <CardTitle className="text-sm font-medium text-blue-900">
+              Police Posts
+            </CardTitle>
+            <MapPin className="h-4 w-4 text-blue-400" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{postsCount}</div>
+          <CardContent className="bg-white">
+            <div className="text-2xl font-bold text-blue-900">{postsCount}</div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+        <Card className="border-blue-200">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-white">
+            <CardTitle className="text-sm font-medium text-blue-900">
               Police Officers
             </CardTitle>
-            <Shield className="h-4 w-4 text-muted-foreground" />
+            <Shield className="h-4 w-4 text-blue-400" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{officersCount}</div>
+          <CardContent className="bg-white">
+            <div className="text-2xl font-bold text-blue-900">{officersCount}</div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Cases</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
+        <Card className="border-blue-200">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-white">
+            <CardTitle className="text-sm font-medium text-blue-900">Cases</CardTitle>
+            <FileText className="h-4 w-4 text-blue-400" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{casesCount}</div>
+          <CardContent className="bg-white">
+            <div className="text-2xl font-bold text-blue-900">{casesCount}</div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Victims</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+        <Card className="border-blue-200">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-white">
+            <CardTitle className="text-sm font-medium text-blue-900">Victims</CardTitle>
+            <Users className="h-4 w-4 text-blue-400" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{victimsCount}</div>
+          <CardContent className="bg-white">
+            <div className="text-2xl font-bold text-blue-900">{victimsCount}</div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Suspects</CardTitle>
-            <UserCheck className="h-4 w-4 text-muted-foreground" />
+        <Card className="border-blue-200">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-white">
+            <CardTitle className="text-sm font-medium text-blue-900">Suspects</CardTitle>
+            <UserCheck className="h-4 w-4 text-blue-400" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{suspectsCount}</div>
+          <CardContent className="bg-white">
+            <div className="text-2xl font-bold text-blue-900">{suspectsCount}</div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Charges</CardTitle>
-            <Gavel className="h-4 w-4 text-muted-foreground" />
+        <Card className="border-blue-200">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-white">
+            <CardTitle className="text-sm font-medium text-blue-900">Charges</CardTitle>
+            <Gavel className="h-4 w-4 text-blue-400" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{chargesCount}</div>
+          <CardContent className="bg-white">
+            <div className="text-2xl font-bold text-blue-900">{chargesCount}</div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+        <Card className="border-blue-200">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-white">
+            <CardTitle className="text-sm font-medium text-blue-900">
               Health Facilities
             </CardTitle>
-            <Hospital className="h-4 w-4 text-muted-foreground" />
+            <Hospital className="h-4 w-4 text-blue-400" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{facilitiesCount}</div>
+          <CardContent className="bg-white">
+            <div className="text-2xl font-bold text-blue-900">{facilitiesCount}</div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Examinations</CardTitle>
-            <Briefcase className="h-4 w-4 text-muted-foreground" />
+        <Card className="border-blue-200">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-white">
+            <CardTitle className="text-sm font-medium text-blue-900">Examinations</CardTitle>
+            <Briefcase className="h-4 w-4 text-blue-400" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{examinationsCount}</div>
+          <CardContent className="bg-white">
+            <div className="text-2xl font-bold text-blue-900">{examinationsCount}</div>
           </CardContent>
         </Card>
       </div>
       {/* Simple bar chart for cases per police post */}
       {Object.keys(casesPerPost).length > 0 && (
         <div className="mt-8">
-          <Card>
+          <Card className="border-blue-200">
             <CardHeader>
-              <CardTitle>Cases per Police Post</CardTitle>
+              <CardTitle className="text-blue-900">Cases per Police Post</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="bg-white">
               <div className="space-y-2">
                 {Object.entries(casesPerPost).map(([post, count]) => (
                   <div key={post} className="flex items-center gap-2">
-                    <div className="w-40 truncate text-sm">{post}</div>
-                    <div className="flex-1 bg-muted h-3 rounded">
+                    <div className="w-40 truncate text-sm text-blue-900">{post}</div>
+                    <div className="flex-1 bg-gray-200 h-3 rounded">
                       <div
-                        className="bg-primary h-3 rounded"
+                        className="bg-blue-800 h-3 rounded"
                         style={{
                           width: `${Math.max(
                             5,
-                            (count / Math.max(...Object.values(casesPerPost))) *
-                              100
+                            (count / Math.max(...Object.values(casesPerPost))) * 100
                           )}%`,
                         }}
                       ></div>
                     </div>
-                    <div className="w-8 text-right text-sm">{count}</div>
+                    <div className="w-8 text-right text-sm text-blue-900">{count}</div>
                   </div>
                 ))}
               </div>

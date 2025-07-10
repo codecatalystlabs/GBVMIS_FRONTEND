@@ -313,7 +313,7 @@ export function ChargesTable() {
           <TableBody>
             {charges.map((c: Charge) => (
               <TableRow
-                key={c.id} // Unique key prop added to fix the error
+                key={c.id} 
                 className="border-t border-blue-200 hover:bg-gray-200 transition-all duration-200"
               >
                 <TableCell className="p-3">

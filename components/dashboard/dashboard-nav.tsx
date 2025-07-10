@@ -57,10 +57,10 @@ export function DashboardNav() {
   const { isOpen, isCollapsed, close } = useSidebar();
   const isMobile = useMediaQuery("(max-width: 768px)");
 
-  // Update the close function to check if we're in the settings page
+  
   const isSettingsPage = pathname.includes("/dashboard/settings");
 
-  // Handle navigation click - only close sidebar on mobile
+  
   const handleNavClick = () => {
     if (isMobile) {
       close();

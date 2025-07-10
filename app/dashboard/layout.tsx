@@ -1,23 +1,26 @@
-import type React from "react"
-import { DashboardNav } from "@/components/dashboard/dashboard-nav"
-import { DashboardHeader } from "@/components/dashboard/dashboard-header"
-import { SidebarProvider } from "@/components/dashboard/sidebar-provider"
+// app/dashboard/layout.tsx
+import type React from "react";
+import { DashboardNav } from "@/components/dashboard/dashboard-nav";
+import { DashboardHeader } from "@/components/dashboard/dashboard-header";
+import { SidebarProvider } from "@/components/dashboard/sidebar-provider";
+import { ProfilePicProvider } from "@/components/dashboard/profilepic";
 
 export default function DashboardLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen flex-col">
-        <DashboardHeader />
-        <div className="flex flex-1">
-          <DashboardNav />
-          <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
+    <ProfilePicProvider>
+      <SidebarProvider>
+        <div className="flex min-h-screen flex-col">
+          <DashboardHeader />
+          <div className="flex flex-1">
+            <DashboardNav />
+            <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
+          </div>
         </div>
-      </div>
-    </SidebarProvider>
-  )
+      </SidebarProvider>
+    </ProfilePicProvider>
+  );
 }
-

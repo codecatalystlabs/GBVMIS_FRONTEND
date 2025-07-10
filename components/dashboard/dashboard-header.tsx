@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -10,7 +11,6 @@ import {
   PanelLeftClose,
   PanelLeft,
 } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -23,15 +23,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useSidebar } from "@/components/dashboard/sidebar-provider";
 import { useAuth } from "@/context/AuthContext";
+import Notifications from "@/app/dashboard/notifications/page"; 
 
 export function DashboardHeader() {
   const { toggle, toggleCollapse, isCollapsed } = useSidebar();
   const pathname = usePathname();
   const router = useRouter();
+  const { logout } = useAuth();
+  const [showNotifications, setShowNotifications] = useState(false);
 
-  const { logout } = useAuth(); // Provides login and authentication state
-
-  // Get the current page title from the pathname
   const getPageTitle = () => {
     const path = pathname.split("/").pop();
     if (!path || path === "dashboard") return "Dashboard";
@@ -89,12 +89,17 @@ export function DashboardHeader() {
           variant="ghost"
           size="icon"
           className="relative text-blue-900 hover:bg-gray-200"
-          onClick={() => router.push("/dashboard/notifications")}
+          onClick={() => setShowNotifications(!showNotifications)}
         >
           <Bell className="h-5 w-5" />
           <span className="sr-only">Notifications</span>
           <span className="absolute right-1 top-1 flex h-2 w-2 rounded-full bg-red-500"></span>
         </Button>
+        {showNotifications && (
+          <div className="absolute top-16 right-4 z-40 bg-white border border-blue-200 shadow-lg p-4 rounded-md max-w-md w-full">
+            <Notifications />
+          </div>
+        )}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -110,7 +115,7 @@ export function DashboardHeader() {
             align="end"
             className="bg-white border border-blue-200 text-blue-900"
           >
-            <DropdownMenuLabel className="text-blue-900">My Account</DropdownMenuLabel>
+            <DropdownMenuLabel className="text-blue-900">My corrispondente Account</DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-blue-200" />
             <DropdownMenuItem className="hover:bg-gray-200 text-blue-900">
               <Link href="/dashboard/settings" className="flex w-full">

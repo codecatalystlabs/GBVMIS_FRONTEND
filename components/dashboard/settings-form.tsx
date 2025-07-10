@@ -5,7 +5,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Loader2, Save } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -38,14 +37,11 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTheme } from "next-themes";
+import { useProfilePic } from "@/components/dashboard/profilepic";
 
 const profileFormSchema = z.object({
-  name: z.string().min(2, {
-    message: "Name must be at least 2 characters.",
-  }),
-  email: z.string().email({
-    message: "Please enter a valid email address.",
-  }),
+  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+  email: z.string().email({ message: "Please enter a valid email address." }),
   bio: z.string().max(160).optional(),
   jobTitle: z.string().optional(),
   department: z.string().optional(),
@@ -74,12 +70,14 @@ type SecurityFormValues = z.infer<typeof securityFormSchema>;
 type AppearanceFormValues = z.infer<typeof appearanceFormSchema>;
 
 // Profile Tab Component
-function ProfileTab({ isLoading, onProfileSubmit, profilePic, setProfilePic }: {
+function ProfileTab({
+  isLoading,
+  onProfileSubmit,
+}: {
   isLoading: { profile: boolean };
   onProfileSubmit: (data: ProfileFormValues) => void;
-  profilePic: string | null;
-  setProfilePic: (pic: string | null) => void;
 }) {
+  const { profilePic, setProfilePic } = useProfilePic();
   const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
@@ -91,6 +89,18 @@ function ProfileTab({ isLoading, onProfileSubmit, profilePic, setProfilePic }: {
     },
   });
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      profileForm.reset({
+        name: localStorage.getItem("profileName") || "John Doe",
+        email: localStorage.getItem("profileEmail") || "john.doe@example.com",
+        bio: localStorage.getItem("profileBio") || "Senior Sales Manager with 10+ years of experience in enterprise software sales.",
+        jobTitle: localStorage.getItem("profileJobTitle") || "Senior Sales Manager",
+        department: localStorage.getItem("profileDepartment") || "Sales",
+      });
+    }
+  }, [profileForm]);
+
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -98,7 +108,6 @@ function ProfileTab({ isLoading, onProfileSubmit, profilePic, setProfilePic }: {
       reader.onloadend = () => {
         const result = reader.result as string;
         setProfilePic(result);
-        localStorage.setItem("profilePic", result);
       };
       reader.readAsDataURL(file);
     }
@@ -106,7 +115,6 @@ function ProfileTab({ isLoading, onProfileSubmit, profilePic, setProfilePic }: {
 
   const handleRemoveImage = () => {
     setProfilePic(null);
-    localStorage.removeItem("profilePic");
   };
 
   return (
@@ -412,8 +420,15 @@ function NotificationsTab({ isLoading, onNotificationsSubmit }: {
 }
 
 // Security Tab Component
-function SecurityTab({ isLoading, onSecuritySubmit }: {
+function SecurityTab({
+  isLoading,
+  setIsLoading,
+  onSecuritySubmit,
+}: {
   isLoading: { security: boolean };
+  setIsLoading: React.Dispatch<
+    React.SetStateAction<{ profile: boolean; notifications: boolean; security: boolean; appearance: boolean }>
+  >;
   onSecuritySubmit: (data: SecurityFormValues) => void;
 }) {
   const securityForm = useForm<SecurityFormValues>({
@@ -423,6 +438,28 @@ function SecurityTab({ isLoading, onSecuritySubmit }: {
       sessionTimeout: "30",
     },
   });
+
+  const handleChangePassword = async () => {
+    setIsLoading((prev) => ({ ...prev, security: true }));
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
+      toast({
+        title: "Password updated",
+        description: "Your password has been successfully changed.",
+      });
+      if (typeof window !== "undefined") {
+        localStorage.setItem("passwordLastChanged", new Date().toISOString());
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading((prev) => ({ ...prev, security: false }));
+    }
+  };
 
   return (
     <TabsContent value="security">
@@ -441,12 +478,18 @@ function SecurityTab({ isLoading, onSecuritySubmit }: {
                 <Button
                   variant="outline"
                   className="bg-gray-200 text-blue-900 border-blue-200 hover:bg-blue-800 hover:text-white"
+                  onClick={handleChangePassword}
                 >
                   Change password
                 </Button>
               </div>
               <div>
-                <p className="text-sm text-gray-600">Last changed: 3 months ago</p>
+                <p className="text-sm text-gray-600">
+                  Last changed:{" "}
+                  {typeof window !== "undefined" && localStorage.getItem("passwordLastChanged")
+                    ? new Date(localStorage.getItem("passwordLastChanged")!).toLocaleDateString()
+                    : "3 months ago"}
+                </p>
               </div>
             </div>
           </div>
@@ -656,6 +699,7 @@ function AppearanceTab({ isLoading, onAppearanceSubmit }: {
 // Main SettingsForm Component
 export function SettingsForm() {
   const { theme, setTheme } = useTheme();
+  const { profilePic, setProfilePic } = useProfilePic();
   const [mounted, setMounted] = useState(false);
   const [isLoading, setIsLoading] = useState<{
     profile: boolean;
@@ -668,9 +712,6 @@ export function SettingsForm() {
     security: false,
     appearance: false,
   });
-  const [profilePic, setProfilePic] = useState<string | null>(
-    localStorage.getItem("profilePic") || null
-  );
 
   useEffect(() => {
     setMounted(true);
@@ -720,6 +761,14 @@ export function SettingsForm() {
   });
 
   async function onProfileSubmit(data: ProfileFormValues) {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("profileName", data.name);
+      localStorage.setItem("profileEmail", data.email);
+      localStorage.setItem("profileBio", data.bio || "");
+      localStorage.setItem("profileJobTitle", data.jobTitle || "");
+      localStorage.setItem("profileDepartment", data.department || "");
+    }
+
     setIsLoading((prev) => ({ ...prev, profile: true }));
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -827,15 +876,20 @@ export function SettingsForm() {
       <ProfileTab
         isLoading={isLoading}
         onProfileSubmit={onProfileSubmit}
-        profilePic={profilePic}
-        setProfilePic={setProfilePic}
       />
       <NotificationsTab
         isLoading={isLoading}
         onNotificationsSubmit={onNotificationsSubmit}
       />
-      <SecurityTab isLoading={isLoading} onSecuritySubmit={onSecuritySubmit} />
-      <AppearanceTab isLoading={isLoading} onAppearanceSubmit={onAppearanceSubmit} />
+      <SecurityTab
+        isLoading={isLoading}
+        setIsLoading={setIsLoading}
+        onSecuritySubmit={onSecuritySubmit}
+      />
+      <AppearanceTab
+        isLoading={isLoading}
+        onAppearanceSubmit={onAppearanceSubmit}
+      />
     </Tabs>
   );
 }

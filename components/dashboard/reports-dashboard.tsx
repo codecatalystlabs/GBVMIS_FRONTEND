@@ -10,11 +10,29 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SalesChart } from "@/components/dashboard/sales-chart";
 import { LeadSourceChart } from "@/components/dashboard/lead-source-chart";
+import { useRouter } from "next/navigation";
 
 export function ReportsDashboard() {
+  const router = useRouter();
+
+  const handleTabChange = (value: string) => {
+    switch (value) {
+      case "sales":
+        router.push("/sales");
+        break;
+      case "leads":
+        router.push("/leads");
+        break;
+      case "accounts":
+        router.push("/accounts");
+        break;
+      // Default case (overview) does not navigate, stays on dashboard
+    }
+  };
+
   return (
     <div className="space-y-4 bg-gray-100 p-4 rounded-lg">
-      <Tabs defaultValue="overview" className="space-y-4">
+      <Tabs defaultValue="overview" className="space-y-4" onValueChange={handleTabChange}>
         <TabsList className="bg-white border border-blue-200 rounded-md">
           <TabsTrigger
             value="overview"
@@ -80,15 +98,9 @@ export function ReportsDashboard() {
             </Card>
           </div>
         </TabsContent>
-        <TabsContent value="sales">
-          <p className="text-gray-600">Detailed sales content goes here.</p>
-        </TabsContent>
-        <TabsContent value="leads">
-          <p className="text-gray-600">Lead tracking and breakdown here.</p>
-        </TabsContent>
-        <TabsContent value="accounts">
-          <p className="text-gray-600">Account management metrics here.</p>
-        </TabsContent>
+        <TabsContent value="Sales"></TabsContent>
+        <TabsContent value="Leads"></TabsContent>
+        <TabsContent value="Accounts"></TabsContent>
       </Tabs>
     </div>
   );

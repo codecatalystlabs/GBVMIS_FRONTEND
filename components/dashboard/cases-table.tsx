@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState, useCallback } from 'react';
-import useSWR from 'swr';
-import { fetcher, apiClient } from '@/lib/api';
-import { Case, PoliceOfficer, PolicePost, Victim } from '@/types';
-import { Button } from '@/components/ui/button';
+import { useState, useCallback } from "react";
+import useSWR from "swr";
+import { fetcher, apiClient } from "@/lib/api";
+import { Case, PoliceOfficer, PolicePost, Victim } from "@/types";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -12,7 +12,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,7 +20,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   DropdownMenuLabel,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   MoreHorizontal,
   Eye,
@@ -29,7 +29,7 @@ import {
   Plus,
   ChevronDown,
   Search,
-} from 'lucide-react';
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -37,23 +37,23 @@ import {
   DialogTitle,
   DialogFooter,
   DialogClose,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { toast } from 'react-toastify';
-import { SearchableMultiSelect } from '@/components/ui/searchable-multiselect';
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "react-toastify";
+import { SearchableMultiSelect } from "@/components/ui/searchable-multiselect";
 
 export function CasesTable() {
   // Data fetching
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [selectedCases, setSelectedCases] = useState<string[]>([]);
@@ -65,17 +65,17 @@ export function CasesTable() {
   const [formLoading, setFormLoading] = useState(false);
 
   // Fetch all related data for dropdowns
-  const { data: officersData } = useSWR('/police-officers', fetcher);
-  const { data: postsData } = useSWR('/police-posts', fetcher);
+  const { data: officersData } = useSWR("/police-officers", fetcher);
+  const { data: postsData } = useSWR("/police-posts", fetcher);
   const { data: suspectsData, mutate: mutateSuspects } = useSWR(
-    '/suspects',
+    "/suspects",
     fetcher
   );
   const { data: victimsData, mutate: mutateVictims } = useSWR(
-    '/victims',
+    "/victims",
     fetcher
   );
-  const { data: chargesData } = useSWR('/charges', fetcher);
+  const { data: chargesData } = useSWR("/charges", fetcher);
   const allCharges = chargesData?.data || [];
 
   // Fetch cases with pagination and search
@@ -113,15 +113,15 @@ export function CasesTable() {
 
   // Add/Edit dialog state
   const [addForm, setAddForm] = useState<any>({
-    case_number: '',
-    title: '',
-    status: '',
-    date_opened: '',
-    officer_id: '',
-    police_post_id: '',
+    case_number: "",
+    title: "",
+    status: "",
+    date_opened: "",
+    officer_id: "",
+    police_post_id: "",
     suspect_ids: [],
     victim_ids: [],
-    description: '',
+    description: "",
     charges: [],
   });
   const [editForm, setEditForm] = useState<any>(null);
@@ -142,7 +142,7 @@ export function CasesTable() {
     setFormLoading(true);
     try {
       const formatDateToISO = (dateStr: string) => {
-        if (dateStr.includes('T')) return dateStr;
+        if (dateStr.includes("T")) return dateStr;
         return `${dateStr}T00:00:00Z`;
       };
       const payload = {
@@ -155,8 +155,8 @@ export function CasesTable() {
           ? allCharges
               .filter((c: any) =>
                 (addForm.charges as (string | undefined | null)[])
-                  .filter((id): id is string => typeof id === 'string')
-                  .includes(String(c.ID ?? ''))
+                  .filter((id): id is string => typeof id === "string")
+                  .includes(String(c.ID ?? ""))
               )
               .map((c: any) => ({
                 charge_title: c.charge_title,
@@ -166,24 +166,26 @@ export function CasesTable() {
           : [],
         date_opened: formatDateToISO(addForm.date_opened),
       };
-      await apiClient.post('/case', payload);
-      toast.success('Case added successfully!');
+      await apiClient.post("/case", payload);
+      toast.success("Case added successfully!");
       setIsAddDialogOpen(false);
       setAddForm({
-        case_number: '',
-        title: '',
-        status: '',
-        date_opened: '',
-        officer_id: '',
-        police_post_id: '',
+        case_number: "",
+        title: "",
+        status: "",
+        date_opened: "",
+        officer_id: "",
+        police_post_id: "",
         suspect_ids: [],
         victim_ids: [],
-        description: '',
+        description: "",
         charges: [],
       });
       mutate();
     } catch (err: any) {
-      toast.error(err?.info?.message || err?.message || 'Failed to add case');
+      toast.error(
+        err?.info?.message || err?.message || "Failed to add case"
+      );
     } finally {
       setFormLoading(false);
     }
@@ -195,7 +197,7 @@ export function CasesTable() {
     setFormLoading(true);
     try {
       const formatDateToISO = (dateStr: string) => {
-        if (dateStr.includes('T')) return dateStr;
+        if (dateStr.includes("T")) return dateStr;
         return `${dateStr}T00:00:00Z`;
       };
       const payload = {
@@ -208,8 +210,8 @@ export function CasesTable() {
           ? allCharges
               .filter((c: any) =>
                 (editForm.charges as (string | undefined | null)[])
-                  .filter((id): id is string => typeof id === 'string')
-                  .includes(String(c.ID ?? ''))
+                  .filter((id): id is string => typeof id === "string")
+                  .includes(String(c.ID ?? ""))
               )
               .map((c: any) => ({
                 charge_title: c.charge_title,
@@ -220,14 +222,14 @@ export function CasesTable() {
         date_opened: formatDateToISO(editForm.date_opened),
       };
       await apiClient.put(`/case/${selectedCase.id}`, payload);
-      toast.success('Case updated successfully!');
+      toast.success("Case updated successfully!");
       setIsEditDialogOpen(false);
       setEditForm(null);
       setSelectedCase(null);
       mutate();
     } catch (err: any) {
       toast.error(
-        err?.info?.message || err?.message || 'Failed to update case'
+        err?.info?.message || err?.message || "Failed to update case"
       );
     } finally {
       setFormLoading(false);
@@ -250,16 +252,16 @@ export function CasesTable() {
         : [],
       suspect_ids: Array.isArray(c.suspect_ids)
         ? c.suspect_ids.filter(
-            (id) => typeof id === 'string' || typeof id === 'number'
+            (id) => typeof id === "string" || typeof id === "number"
           )
         : [],
       victim_ids: Array.isArray(c.victim_ids)
         ? c.victim_ids.filter(
-            (id) => typeof id === 'string' || typeof id === 'number'
+            (id) => typeof id === "string" || typeof id === "number"
           )
         : [],
-      officer_id: c.officer_id?.toString() || '',
-      police_post_id: c.police_post_id?.toString() || '',
+      officer_id: c.officer_id?.toString() || "",
+      police_post_id: c.police_post_id?.toString() || "",
     });
     setIsEditDialogOpen(true);
   };
@@ -286,32 +288,32 @@ export function CasesTable() {
   };
 
   // Table rendering
-  if (isLoading) return <div>Loading cases...</div>;
-  if (error) return <div>Error loading cases</div>;
+  if (isLoading) return <div className="text-blue-900">Loading cases...</div>;
+  if (error) return <div className="text-red-500">Error loading cases</div>;
 
   // Helper functions
   const getOfficerName = (id: number | string | undefined) => {
-    if (typeof id !== 'number') return '-';
+    if (typeof id !== "number") return "-";
     const o = officers.find((x: any) => x.id === id);
-    return o ? `${o.first_name} ${o.last_name}` : '-';
+    return o ? `${o.first_name} ${o.last_name}` : "-";
   };
   const getPostName = (id: number | string | undefined) => {
-    if (typeof id !== 'number') return '-';
+    if (typeof id !== "number") return "-";
     const p = posts.find((x: any) => x.id === id);
-    return p ? p.name : '-';
+    return p ? p.name : "-";
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6 p-6 bg-gray-100 rounded-xl shadow-lg">
       {/* Search, filter, pagination controls */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
           <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-blue-400" />
             <Input
               type="search"
               placeholder="Search cases..."
-              className="w-full pl-8 sm:w-[300px]"
+              className="w-full pl-10 sm:w-[300px] bg-white border-blue-200 text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-600 transition-all duration-300"
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -321,17 +323,29 @@ export function CasesTable() {
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="ml-auto h-9">
-                <ChevronDown className="h-4 w-4" />
+              <Button
+                variant="outline"
+                className="h-9 bg-white border-blue-200 text-blue-900 hover:bg-gray-200"
+              >
+                <ChevronDown className="h-4 w-4 text-blue-900" />
                 <span className="sr-only">Filter</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Filter by</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>Status</DropdownMenuItem>
-              <DropdownMenuItem>Officer</DropdownMenuItem>
-              <DropdownMenuItem>Police Post</DropdownMenuItem>
+            <DropdownMenuContent
+              align="end"
+              className="bg-white border-blue-200 text-blue-900"
+            >
+              <DropdownMenuLabel className="text-blue-900">Filter by</DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-blue-200" />
+              <DropdownMenuItem className="hover:bg-gray-200 text-blue-900">
+                Status
+              </DropdownMenuItem>
+              <DropdownMenuItem className="hover:bg-gray-200 text-blue-900">
+                Officer
+              </DropdownMenuItem>
+              <DropdownMenuItem className="hover:bg-gray-200 text-blue-900">
+                Police Post
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -343,99 +357,148 @@ export function CasesTable() {
               setPage(1);
             }}
           >
-            <SelectTrigger className="h-9 w-[70px]">
+            <SelectTrigger className="h-9 w-[70px] bg-white border-blue-200 text-blue-900 focus:ring-2 focus:ring-blue-600">
               <SelectValue placeholder="10" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="10">10</SelectItem>
-              <SelectItem value="20">20</SelectItem>
-              <SelectItem value="50">50</SelectItem>
-              <SelectItem value="100">100</SelectItem>
+            <SelectContent className="bg-white border-blue-200 text-blue-900">
+              <SelectItem value="10" className="hover:bg-gray-200 text-blue-900">
+                10
+              </SelectItem>
+              <SelectItem value="20" className="hover:bg-gray-200 text-blue-900">
+                20
+              </SelectItem>
+              <SelectItem value="50" className="hover:bg-gray-200 text-blue-900">
+                50
+              </SelectItem>
+              <SelectItem value="100" className="hover:bg-gray-200 text-blue-900">
+                100
+              </SelectItem>
             </SelectContent>
           </Select>
-          <Button onClick={handleAddClick}>
-            <Plus className="mr-2 h-4 w-4" /> Add Case
+          <Button
+            onClick={handleAddClick}
+            className="bg-blue-800 text-white hover:bg-blue-900 rounded-md transition-all duration-300"
+          >
+            <Plus className="mr-2 h-5 w-5" /> Add Case
           </Button>
         </div>
       </div>
       {/* Table */}
-      <div className="rounded-md border">
+      <div className="rounded-xl border border-blue-200 bg-white shadow-lg">
         <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[40px]">
+          <TableHeader className="bg-gray-100">
+            <TableRow className="border-b border-blue-200 hover:bg-gray-200">
+              <TableHead className="w-[40px] p-3 text-blue-900">
                 <Checkbox
                   checked={
                     selectedCases.length === cases.length && cases.length > 0
                   }
                   onCheckedChange={toggleSelectAll}
+                  className="border-blue-200 text-blue-600 focus:ring-blue-600"
                 />
               </TableHead>
-              <TableHead>Case Number</TableHead>
-              <TableHead>Title</TableHead>
-              <TableHead>Officer</TableHead>
-              <TableHead>Police Post</TableHead>
-              <TableHead>Suspects</TableHead>
-              <TableHead>Victims</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Date Opened</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead className="w-[40px]"></TableHead>
+              <TableHead className="p-3 text-blue-900 font-semibold">
+                Case Number
+              </TableHead>
+              <TableHead className="p-3 text-blue-900 font-semibold">Title</TableHead>
+              <TableHead className="p-3 text-blue-900 font-semibold">
+                Officer
+              </TableHead>
+              <TableHead className="p-3 text-blue-900 font-semibold">
+                Police Post
+              </TableHead>
+              <TableHead className="p-3 text-blue-900 font-semibold">
+                Suspects
+              </TableHead>
+              <TableHead className="p-3 text-blue-900 font-semibold">
+                Victims
+              </TableHead>
+              <TableHead className="p-3 text-blue-900 font-semibold">Status</TableHead>
+              <TableHead className="p-3 text-blue-900 font-semibold">
+                Date Opened
+              </TableHead>
+              <TableHead className="p-3 text-blue-900 font-semibold">
+                Description
+              </TableHead>
+              <TableHead className="w-[40px] p-3 text-blue-900"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {cases.map((c: Case) => (
-              <TableRow key={c.id}>
-                <TableCell>
+              <TableRow
+                key={c.id}
+                className="border-t border-blue-200 hover:bg-gray-200 transition-all duration-200"
+              >
+                <TableCell className="p-3">
                   <Checkbox
                     checked={selectedCases.includes(c.id?.toString())}
-                    onCheckedChange={() => toggleSelectCase(c.id?.toString())}
+                    onCheckedChange={() =>
+                      toggleSelectCase(c.id?.toString())
+                    }
+                    className="border-blue-200 text-blue-600 focus:ring-blue-600"
                   />
                 </TableCell>
-                <TableCell>{c.case_number}</TableCell>
-                <TableCell>{c.title}</TableCell>
-                <TableCell>{getOfficerName(c.officer_id)}</TableCell>
-                <TableCell>{getPostName(c.police_post_id)}</TableCell>
-                <TableCell>
-                  {/* Show total number of suspects */}
+                <TableCell className="p-3 text-blue-900">
+                  {c.case_number}
+                </TableCell>
+                <TableCell className="p-3 text-blue-900">{c.title}</TableCell>
+                <TableCell className="p-3 text-blue-900">
+                  {getOfficerName(c.officer_id)}
+                </TableCell>
+                <TableCell className="p-3 text-blue-900">
+                  {getPostName(c.police_post_id)}
+                </TableCell>
+                <TableCell className="p-3 text-blue-900">
                   {Array.isArray(c.suspects)
                     ? c.suspects.length
                     : Array.isArray(c.suspect_ids)
                     ? c.suspect_ids.length
                     : 0}
                 </TableCell>
-                <TableCell>
-                  {/* Show total number of victims */}
+                <TableCell className="p-3 text-blue-900">
                   {Array.isArray(c.victims)
                     ? c.victims.length
                     : Array.isArray(c.victim_ids)
                     ? c.victim_ids.length
                     : 0}
                 </TableCell>
-                <TableCell>{c.status}</TableCell>
-                <TableCell>{c.date_opened}</TableCell>
-                <TableCell>
-                  {c.description?.slice(0, 40)}
-                  {c.description?.length > 40 ? '...' : ''}
+                <TableCell className="p-3 text-blue-900">{c.status}</TableCell>
+                <TableCell className="p-3 text-blue-900">{c.date_opened}</TableCell>
+                <TableCell className="p-3 text-blue-900">
+                  {c.description ? c.description.slice(0, 40) : ""}
+                  {c.description && c.description.length > 40 ? "..." : ""}
                 </TableCell>
-                <TableCell>
+                <TableCell className="p-3">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-blue-900 hover:bg-gray-200 rounded-full"
+                      >
                         <MoreHorizontal className="h-4 w-4" />
                         <span className="sr-only">Actions</span>
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleViewClick(c)}>
+                    <DropdownMenuContent
+                      align="end"
+                      className="bg-white border-blue-200 text-blue-900"
+                    >
+                      <DropdownMenuItem
+                        className="hover:bg-gray-200 text-blue-900"
+                        onClick={() => handleViewClick(c)}
+                      >
                         <Eye className="mr-2 h-4 w-4" /> View
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleEditClick(c)}>
+                      <DropdownMenuItem
+                        className="hover:bg-gray-200 text-blue-900"
+                        onClick={() => handleEditClick(c)}
+                      >
                         <Edit className="mr-2 h-4 w-4" /> Edit
                       </DropdownMenuItem>
-                      <DropdownMenuSeparator />
+                      <DropdownMenuSeparator className="bg-blue-200" />
                       <DropdownMenuItem
-                        className="text-destructive"
+                        className="hover:bg-gray-200 text-red-500"
                         onClick={() => openDeleteDialog(c)}
                       >
                         <Trash2 className="mr-2 h-4 w-4" /> Delete
@@ -449,17 +512,26 @@ export function CasesTable() {
         </Table>
       </div>
       {/* Pagination */}
-      <div className="flex items-center justify-between">
-        <div className="text-sm text-muted-foreground">
-          Showing <strong>{(page - 1) * limit + 1}</strong> to{' '}
-          <strong>{Math.min(page * limit, pagination.total_items)}</strong> of{' '}
-          <strong>{pagination.total_items}</strong> results
+      <div className="flex items-center justify-between py-3 px-4 bg-white border border-blue-200 rounded-xl shadow-md">
+        <div className="text-sm text-blue-900">
+          Showing{" "}
+          <strong className="text-blue-900">
+            {(page - 1) * limit + 1}
+          </strong>{" "}
+          to{" "}
+          <strong className="text-blue-900">
+            {Math.min(page * limit, pagination.total_items)}
+          </strong>{" "}
+          of{" "}
+          <strong className="text-blue-900">{pagination.total_items}</strong>{" "}
+          results
         </div>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
             disabled={page === 1}
+            className="bg-white border-blue-200 text-blue-900 hover:bg-gray-200 rounded-md"
             onClick={() => setPage(page - 1)}
           >
             Previous
@@ -468,6 +540,7 @@ export function CasesTable() {
             variant="outline"
             size="sm"
             disabled={page === pagination.total_pages}
+            className="bg-white border-blue-200 text-blue-900 hover:bg-gray-200 rounded-md"
             onClick={() => setPage(page + 1)}
           >
             Next
@@ -476,13 +549,13 @@ export function CasesTable() {
       </div>
       {/* Add Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent>
+        <DialogContent className="bg-white border-blue-200 rounded-xl shadow-lg max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Add Case</DialogTitle>
+            <DialogTitle className="text-blue-900">Add Case</DialogTitle>
           </DialogHeader>
           <form
             onSubmit={handleAddCase}
-            className="space-y-4 max-h-[70vh] overflow-y-auto"
+            className="space-y-4 p-4"
           >
             <Input
               name="case_number"
@@ -490,6 +563,7 @@ export function CasesTable() {
               value={addForm.case_number}
               onChange={handleAddChange}
               required
+              className="bg-white border-blue-200 text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-600 rounded-md transition-all duration-300"
             />
             <Input
               name="title"
@@ -497,6 +571,7 @@ export function CasesTable() {
               value={addForm.title}
               onChange={handleAddChange}
               required
+              className="bg-white border-blue-200 text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-600 rounded-md transition-all duration-300"
             />
             <Input
               name="status"
@@ -504,6 +579,7 @@ export function CasesTable() {
               value={addForm.status}
               onChange={handleAddChange}
               required
+              className="bg-white border-blue-200 text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-600 rounded-md transition-all duration-300"
             />
             <Input
               name="date_opened"
@@ -511,6 +587,7 @@ export function CasesTable() {
               value={addForm.date_opened}
               onChange={handleAddChange}
               required
+              className="bg-white border-blue-200 text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-600 rounded-md transition-all duration-300"
             />
             <Select
               name="officer_id"
@@ -520,12 +597,16 @@ export function CasesTable() {
               }
               required
             >
-              <SelectTrigger>
+              <SelectTrigger className="bg-white border-blue-200 text-blue-900 focus:ring-2 focus:ring-blue-600 rounded-md transition-all duration-300">
                 <SelectValue placeholder="Select Officer" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white border-blue-200 text-blue-900">
                 {officers.map((o: any) => (
-                  <SelectItem key={o.id} value={o.id.toString()}>
+                  <SelectItem
+                    key={o.id}
+                    value={o.id.toString()}
+                    className="hover:bg-gray-200 text-blue-900"
+                  >
                     {o.first_name} {o.last_name}
                   </SelectItem>
                 ))}
@@ -539,12 +620,16 @@ export function CasesTable() {
               }
               required
             >
-              <SelectTrigger>
+              <SelectTrigger className="bg-white border-blue-200 text-blue-900 focus:ring-2 focus:ring-blue-600 rounded-md transition-all duration-300">
                 <SelectValue placeholder="Select Police Post" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white border-blue-200 text-blue-900">
                 {posts.map((p: any) => (
-                  <SelectItem key={p.id} value={p.id.toString()}>
+                  <SelectItem
+                    key={p.id}
+                    value={p.id.toString()}
+                    className="hover:bg-gray-200 text-blue-900"
+                  >
                     {p.name}
                   </SelectItem>
                 ))}
@@ -562,7 +647,7 @@ export function CasesTable() {
                   ? addForm.suspect_ids
                       .filter(
                         (id: any) =>
-                          typeof id === 'string' || typeof id === 'number'
+                          typeof id === "string" || typeof id === "number"
                       )
                       .map((id: any) => id.toString())
                   : []
@@ -579,9 +664,12 @@ export function CasesTable() {
                 }))
               }
               placeholder={
-                !suspectsData ? 'Loading suspects...' : 'Select suspects...'
+                !suspectsData
+                  ? "Loading suspects..."
+                  : "Select suspects..."
               }
               disabled={!suspectsData}
+              className="bg-white border-blue-200 text-blue-900"
             />
             {/* Victims Multi-Select */}
             <SearchableMultiSelect
@@ -595,7 +683,7 @@ export function CasesTable() {
                   ? addForm.victim_ids
                       .filter(
                         (id: any) =>
-                          typeof id === 'string' || typeof id === 'number'
+                          typeof id === "string" || typeof id === "number"
                       )
                       .map((id: any) => id.toString())
                   : []
@@ -612,9 +700,10 @@ export function CasesTable() {
                 }))
               }
               placeholder={
-                !victimsData ? 'Loading victims...' : 'Select victims...'
+                !victimsData ? "Loading victims..." : "Select victims..."
               }
               disabled={!victimsData}
+              className="bg-white border-blue-200 text-blue-900"
             />
             <Input
               name="description"
@@ -622,11 +711,12 @@ export function CasesTable() {
               value={addForm.description}
               onChange={handleAddChange}
               required
+              className="bg-white border-blue-200 text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-600 rounded-md transition-all duration-300"
             />
             <SearchableMultiSelect
               label="Charges"
               options={allCharges
-                .filter((charge: any) => charge?.ID != null) // Use uppercase ID
+                .filter((charge: any) => charge?.ID != null)
                 .map((charge: any) => ({
                   value: charge.ID.toString(),
                   label: `${charge.charge_title} (${charge.severity})`,
@@ -634,34 +724,42 @@ export function CasesTable() {
               selectedValues={
                 Array.isArray(addForm.charges)
                   ? addForm.charges
-                      .filter((id: any) => id != null && id !== '') // Filter out null/undefined/empty values
-                      .map((id: any) => String(id)) // Ensure string conversion
+                      .filter((id: any) => id != null && id !== "")
+                      .map((id: any) => String(id))
                   : []
               }
               onChange={(values) =>
                 setAddForm((f: any) => ({
                   ...f,
-                  charges: values.filter((v: string) => v && v.trim() !== ''), // Filter out empty strings
+                  charges: values.filter(
+                    (v: string) => v && v.trim() !== ""
+                  ),
                 }))
               }
               placeholder={
-                !chargesData ? 'Loading charges...' : 'Select charges...'
+                !chargesData ? "Loading charges..." : "Select charges..."
               }
               disabled={!chargesData}
+              className="bg-white border-blue-200 text-blue-900"
             />
-            <DialogFooter className="mt-4">
+            <DialogFooter className="pt-4">
               <DialogClose asChild>
                 <Button
                   type="button"
                   variant="outline"
                   disabled={formLoading}
+                  className="bg-white border-blue-200 text-blue-900 hover:bg-gray-200 rounded-md transition-all duration-300"
                   onClick={() => setIsAddDialogOpen(false)}
                 >
                   Cancel
                 </Button>
               </DialogClose>
-              <Button type="submit" disabled={formLoading}>
-                {formLoading ? 'Saving...' : 'Save'}
+              <Button
+                type="submit"
+                disabled={formLoading}
+                className="bg-blue-800 text-white hover:bg-blue-900 rounded-md transition-all duration-300"
+              >
+                {formLoading ? "Saving..." : "Save"}
               </Button>
             </DialogFooter>
           </form>
@@ -669,56 +767,64 @@ export function CasesTable() {
       </Dialog>
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
+        <DialogContent className="bg-white border-blue-200 rounded-xl shadow-lg max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit Case</DialogTitle>
+            <DialogTitle className="text-blue-900">Edit Case</DialogTitle>
           </DialogHeader>
           <form
             onSubmit={handleEditCase}
-            className="!px-1 space-y-4 max-h-[70vh] overflow-y-auto"
+            className="space-y-4 p-4"
           >
             <Input
               name="case_number"
               placeholder="Case Number"
-              value={editForm?.case_number || ''}
+              value={editForm?.case_number || ""}
               onChange={handleEditChange}
               required
+              className="bg-white border-blue-200 text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-600 rounded-md transition-all duration-300"
             />
             <Input
               name="title"
               placeholder="Title"
-              value={editForm?.title || ''}
+              value={editForm?.title || ""}
               onChange={handleEditChange}
               required
+              className="bg-white border-blue-200 text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-600 rounded-md transition-all duration-300"
             />
             <Input
               name="status"
               placeholder="Status"
-              value={editForm?.status || ''}
+              value={editForm?.status || ""}
               onChange={handleEditChange}
               required
+              className="bg-white border-blue-200 text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-600 rounded-md transition-all duration-300"
             />
             <Input
               name="date_opened"
               type="date"
-              value={editForm?.date_opened || ''}
+              value={editForm?.date_opened || ""}
               onChange={handleEditChange}
               required
+              className="bg-white border-blue-200 text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-600 rounded-md transition-all duration-300"
             />
             <Select
               name="officer_id"
-              value={editForm?.officer_id || ''}
+              value={editForm?.officer_id || ""}
               onValueChange={(v) =>
                 setEditForm((f: any) => ({ ...f, officer_id: v }))
               }
               required
             >
-              <SelectTrigger>
+              <SelectTrigger className="bg-white border-blue-200 text-blue-900 focus:ring-2 focus:ring-blue-600 rounded-md transition-all duration-300">
                 <SelectValue placeholder="Select Officer" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white border-blue-200 text-blue-900">
                 {officers.map((o: any) => (
-                  <SelectItem key={o.id} value={o.id.toString()}>
+                  <SelectItem
+                    key={o.id}
+                    value={o.id.toString()}
+                    className="hover:bg-gray-200 text-blue-900"
+                  >
                     {o.first_name} {o.last_name}
                   </SelectItem>
                 ))}
@@ -726,18 +832,22 @@ export function CasesTable() {
             </Select>
             <Select
               name="police_post_id"
-              value={editForm?.police_post_id || ''}
+              value={editForm?.police_post_id || ""}
               onValueChange={(v) =>
                 setEditForm((f: any) => ({ ...f, police_post_id: v }))
               }
               required
             >
-              <SelectTrigger>
+              <SelectTrigger className="bg-white border-blue-200 text-blue-900 focus:ring-2 focus:ring-blue-600 rounded-md transition-all duration-300">
                 <SelectValue placeholder="Select Police Post" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white border-blue-200 text-blue-900">
                 {posts.map((p: any) => (
-                  <SelectItem key={p.id} value={p.id.toString()}>
+                  <SelectItem
+                    key={p.id}
+                    value={p.id.toString()}
+                    className="hover:bg-gray-200 text-blue-900"
+                  >
                     {p.name}
                   </SelectItem>
                 ))}
@@ -753,7 +863,7 @@ export function CasesTable() {
               selectedValues={
                 Array.isArray(editForm?.charges)
                   ? editForm.charges
-                      .filter((id: any) => id != null) // Filter out null/undefined values
+                      .filter((id: any) => id != null)
                       .map((id: any) => id.toString())
                   : []
               }
@@ -769,9 +879,10 @@ export function CasesTable() {
                 }))
               }
               placeholder={
-                !suspectsData ? 'Loading suspects...' : 'Select suspects...'
+                !suspectsData ? "Loading suspects..." : "Select suspects..."
               }
               disabled={!suspectsData}
+              className="bg-white border-blue-200 text-blue-900"
             />
             {/* Victims Multi-Select */}
             <SearchableMultiSelect
@@ -785,7 +896,7 @@ export function CasesTable() {
                   ? editForm.victim_ids
                       .filter(
                         (id: any) =>
-                          typeof id === 'string' || typeof id === 'number'
+                          typeof id === "string" || typeof id === "number"
                       )
                       .map((id: any) => id.toString())
                   : []
@@ -802,16 +913,18 @@ export function CasesTable() {
                 }))
               }
               placeholder={
-                !victimsData ? 'Loading victims...' : 'Select victims...'
+                !victimsData ? "Loading victims..." : "Select victims..."
               }
               disabled={!victimsData}
+              className="bg-white border-blue-200 text-blue-900"
             />
             <Input
               name="description"
               placeholder="Description"
-              value={editForm?.description || ''}
+              value={editForm?.description || ""}
               onChange={handleEditChange}
               required
+              className="bg-white border-blue-200 text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-600 rounded-md transition-all duration-300"
             />
             <SearchableMultiSelect
               label="Charges"
@@ -824,34 +937,40 @@ export function CasesTable() {
               selectedValues={
                 Array.isArray(editForm?.charges)
                   ? editForm.charges
-                      .filter((id: any) => id != null && id != '')
+                      .filter((id: any) => id != null && id != "")
                       .map((id: any) => String(id))
                   : []
               }
               onChange={(values) =>
                 setEditForm((f: any) => ({
                   ...f,
-                  charges: values.filter((v: string) => v && v.trim() !== ''),
+                  charges: values.filter((v: string) => v && v.trim() !== ""),
                 }))
               }
               placeholder={
-                !chargesData ? 'Loading charges...' : 'Select charges...'
+                !chargesData ? "Loading charges..." : "Select charges..."
               }
               disabled={!chargesData}
+              className="bg-white border-blue-200 text-blue-900"
             />
-            <DialogFooter className="mt-4">
+            <DialogFooter className="pt-4">
               <DialogClose asChild>
                 <Button
                   type="button"
                   variant="outline"
                   disabled={formLoading}
+                  className="bg-white border-blue-200 text-blue-900 hover:bg-gray-200 rounded-md transition-all duration-300"
                   onClick={() => setIsEditDialogOpen(false)}
                 >
                   Cancel
                 </Button>
               </DialogClose>
-              <Button type="submit" disabled={formLoading}>
-                {formLoading ? 'Saving...' : 'Save'}
+              <Button
+                type="submit"
+                disabled={formLoading}
+                className="bg-blue-800 text-white hover:bg-blue-900 rounded-md transition-all duration-300"
+              >
+                {formLoading ? "Saving..." : "Save"}
               </Button>
             </DialogFooter>
           </form>
@@ -859,35 +978,45 @@ export function CasesTable() {
       </Dialog>
       {/* View Dialog */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent>
+        <DialogContent className="bg-white border-blue-200 rounded-xl shadow-lg max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Case Details</DialogTitle>
+            <DialogTitle className="text-blue-900">Case Details</DialogTitle>
           </DialogHeader>
           {selectedCase ? (
-            <div className="space-y-2">
+            <div className="space-y-4 p-4">
               <div>
-                <b>Case Number:</b> {selectedCase.case_number}
+                <span className="text-blue-400 font-medium">Case Number:</span>{" "}
+                <span className="text-blue-900">{selectedCase.case_number}</span>
               </div>
               <div>
-                <b>Title:</b> {selectedCase.title}
+                <span className="text-blue-400 font-medium">Title:</span>{" "}
+                <span className="text-blue-900">{selectedCase.title}</span>
               </div>
               <div>
-                <b>Status:</b> {selectedCase.status}
+                <span className="text-blue-400 font-medium">Status:</span>{" "}
+                <span className="text-blue-900">{selectedCase.status}</span>
               </div>
               <div>
-                <b>Date Opened:</b> {selectedCase.date_opened}
+                <span className="text-blue-400 font-medium">Date Opened:</span>{" "}
+                <span className="text-blue-900">{selectedCase.date_opened}</span>
               </div>
               <div>
-                <b>Officer:</b> {getOfficerName(selectedCase.officer_id)}
+                <span className="text-blue-400 font-medium">Officer:</span>{" "}
+                <span className="text-blue-900">
+                  {getOfficerName(selectedCase.officer_id)}
+                </span>
               </div>
               <div>
-                <b>Police Post:</b> {getPostName(selectedCase.police_post_id)}
+                <span className="text-blue-400 font-medium">Police Post:</span>{" "}
+                <span className="text-blue-900">
+                  {getPostName(selectedCase.police_post_id)}
+                </span>
               </div>
               <div>
-                <b>Suspects:</b>
+                <span className="text-blue-400 font-medium">Suspects:</span>
                 {Array.isArray(selectedCase.suspects) &&
                 selectedCase.suspects.length > 0 ? (
-                  <ul className="list-disc ml-6">
+                  <ul className="list-disc ml-6 text-blue-900">
                     {selectedCase.suspects.map((suspect: any, idx: number) => (
                       <li key={idx}>
                         <b>
@@ -900,14 +1029,14 @@ export function CasesTable() {
                     ))}
                   </ul>
                 ) : (
-                  <span>-</span>
+                  <span className="text-blue-900">-</span>
                 )}
               </div>
               <div>
-                <b>Victims:</b>
+                <span className="text-blue-400 font-medium">Victims:</span>
                 {Array.isArray(selectedCase.victims) &&
                 selectedCase.victims.length > 0 ? (
-                  <ul className="list-disc ml-6">
+                  <ul className="list-disc ml-6 text-blue-900">
                     {selectedCase.victims.map((victim: any, idx: number) => (
                       <li key={idx}>
                         <b>
@@ -920,40 +1049,43 @@ export function CasesTable() {
                     ))}
                   </ul>
                 ) : (
-                  <span>-</span>
+                  <span className="text-blue-900">-</span>
                 )}
               </div>
               <div>
-                <b>Description:</b> {selectedCase.description}
+                <span className="text-blue-400 font-medium">Description:</span>{" "}
+                <span className="text-blue-900">{selectedCase.description}</span>
               </div>
               <div>
-                <b>Charges:</b>
+                <span className="text-blue-400 font-medium">Charges:</span>
                 {Array.isArray(selectedCase.charges) &&
                 selectedCase.charges.length > 0 ? (
-                  <ul className="list-disc ml-6">
+                  <ul className="list-disc ml-6 text-blue-900">
                     {selectedCase.charges.map((charge: any, idx: number) => (
                       <li key={idx}>
-                        <b>{charge.charge_title}</b>: {charge.description}{' '}
-                        (Severity: {charge.severity})
+                        <b>{charge.charge_title}</b>: {charge.description} (
+                        Severity: {charge.severity})
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <span>-</span>
+                  <span className="text-blue-900">-</span>
                 )}
               </div>
             </div>
           ) : (
-            <div>No case selected.</div>
+            <div className="text-blue-900">No case selected.</div>
           )}
         </DialogContent>
       </Dialog>
       {/* Delete dialog */}
       {isDeleteDialogOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/30 z-50">
-          <div className="bg-white p-6 rounded shadow-lg">
-            <h3 className="mb-4 text-lg font-semibold">Delete Case</h3>
-            <p>
+          <div className="bg-white p-6 rounded-xl shadow-lg border border-blue-200">
+            <h3 className="mb-4 text-lg font-semibold text-blue-900">
+              Delete Case
+            </h3>
+            <p className="text-blue-900">
               Are you sure you want to delete case "{selectedCase?.case_number}
               "?
             </p>
@@ -961,10 +1093,15 @@ export function CasesTable() {
               <Button
                 variant="outline"
                 onClick={() => setIsDeleteDialogOpen(false)}
+                className="bg-white border-blue-200 text-blue-900 hover:bg-gray-200 rounded-md transition-all duration-300"
               >
                 Cancel
               </Button>
-              <Button variant="destructive" onClick={handleDelete}>
+              <Button
+                variant="destructive"
+                onClick={handleDelete}
+                className="bg-red-600 text-white hover:bg-red-700 rounded-md transition-all duration-300"
+              >
                 Delete
               </Button>
             </div>

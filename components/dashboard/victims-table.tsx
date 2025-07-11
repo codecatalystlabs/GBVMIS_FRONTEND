@@ -1,20 +1,19 @@
-'use client';
+// components/dashboard/VictimsTable.tsx
+"use client";
 
-import { useState } from 'react';
-import useSWR from 'swr';
-import useSWRImmutable from 'swr/immutable';
-
+import { useState, useMemo } from "react";
+import useSWR from "swr";
+import useSWRImmutable from "swr/immutable";
 import {
   MoreHorizontal,
   ChevronDown,
   Search,
   ArrowUpDown,
   Plus,
-} from 'lucide-react';
-
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,7 +21,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -30,32 +29,35 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogTrigger,
   DialogClose,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { fetcher, apiClient } from '@/lib/api';
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { fetcher, apiClient } from "@/lib/api";
 
 export function VictimsTable() {
   const [selectedVictims, setSelectedVictims] = useState<string[]>([]);
-  const [open, setOpen] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [sortField, setSortField] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+
   const [victimForm, setVictimForm] = useState<{
     address: string;
     case_ids: number[];
@@ -69,21 +71,28 @@ export function VictimsTable() {
     phone_number: string;
     updated_by: string;
   }>({
-    address: '',
+    address: "",
     case_ids: [],
-    created_by: '',
-    dob: '',
-    first_name: '',
-    gender: '',
-    last_name: '',
-    nationality: '',
-    nin: '',
-    phone_number: '',
-    updated_by: '',
+    created_by: "",
+    dob: "",
+    first_name: "",
+    gender: "",
+    last_name: "",
+    nationality: "",
+    nin: "",
+    phone_number: "",
+    updated_by: "",
   });
 
-  const { data, error, isLoading, mutate } = useSWR('/victims', fetcher);
+  const { data, error, isLoading, mutate } = useSWR(
+    `/victims?page=${page}&pageSize=${pageSize}`,
+    fetcher,
+    {
+      onError: (err) => setErrorMessage("Failed to load victims. Please try again."),
+    }
+  );
   const victims = data?.data || [];
+  const totalVictims = data?.total || victims.length;
 
   const [viewVictim, setViewVictim] = useState<any | null>(null);
   const [editVictim, setEditVictim] = useState<any | null>(null);
@@ -95,38 +104,29 @@ export function VictimsTable() {
   const [examinationVictim, setExaminationVictim] = useState<any | null>(null);
   const [examinationDialogOpen, setExaminationDialogOpen] = useState(false);
   const [examinationForm, setExaminationForm] = useState<any | null>(null);
-  const [examinationEditId, setExaminationEditId] = useState<number | null>(
-    null
-  );
+  const [examinationEditId, setExaminationEditId] = useState<number | null>(null);
   const [examinationLoading, setExaminationLoading] = useState(false);
 
-  // Fetch examinations for a victim (only when dialog is open)
-  const { data: examinationsData, mutate: mutateExaminations } =
-    useSWRImmutable(
-      examinationVictim
-        ? `/examinations/search?victim_id=${examinationVictim.ID}`
-        : null,
-      fetcher
-    );
+  const { data: examinationsData, mutate: mutateExaminations } = useSWRImmutable(
+    examinationVictim ? `/examinations/search?victim_id=${examinationVictim.ID}` : null,
+    fetcher
+  );
   const examinations = examinationsData?.data || [];
 
-  // Fetch all facilities for dropdowns
-  const { data: facilitiesData } = useSWR('/health-facilities', fetcher);
+  const { data: facilitiesData } = useSWR("/health-facilities", fetcher);
   const facilities = facilitiesData?.data || [];
 
-  const { data: practitionersData } = useSWR('/health-practitioners', fetcher);
+  const { data: practitionersData } = useSWR("/health-practitioners", fetcher);
   const practitioners = practitionersData?.data || [];
 
-  const { data: casesData } = useSWR('/cases', fetcher);
+  const { data: casesData } = useSWR("/cases", fetcher);
   const cases = casesData?.data || [];
 
   const toggleSelectAll = () => {
     if (selectedVictims.length === victims.length) {
       setSelectedVictims([]);
     } else {
-      setSelectedVictims(
-        victims.map((victim: { ID: number }) => victim.ID.toString())
-      );
+      setSelectedVictims(victims.map((victim: { ID: number }) => victim.ID.toString()));
     }
   };
 
@@ -141,25 +141,26 @@ export function VictimsTable() {
   const handleAddVictim = async (e: any) => {
     e.preventDefault();
     setFormLoading(true);
+    setErrorMessage(null);
     try {
-      await apiClient.post('/victim', victimForm);
+      await apiClient.post("/victim", victimForm);
       setAddDialogOpen(false);
       setVictimForm({
-        address: '',
+        address: "",
         case_ids: [],
-        created_by: '',
-        dob: '',
-        first_name: '',
-        gender: '',
-        last_name: '',
-        nationality: '',
-        nin: '',
-        phone_number: '',
-        updated_by: '',
+        created_by: "",
+        dob: "",
+        first_name: "",
+        gender: "",
+        last_name: "",
+        nationality: "",
+        nin: "",
+        phone_number: "",
+        updated_by: "",
       });
       mutate();
     } catch (err: any) {
-      // Optionally show error
+      setErrorMessage("Failed to add victim. Please check your input.");
     }
     setFormLoading(false);
   };
@@ -169,7 +170,6 @@ export function VictimsTable() {
     setVictimForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Helper to open edit dialog with victim data
   const openEditDialog = (victim: any) => {
     setEditVictim(victim);
     setEditForm({
@@ -177,28 +177,27 @@ export function VictimsTable() {
       case_ids: Array.isArray(victim.case_ids)
         ? victim.case_ids
         : victim.case_ids
-        ? victim.case_ids.split(',').map((v: any) => Number(v.trim()))
+        ? victim.case_ids.split(",").map((v: any) => Number(v.trim()))
         : [],
     });
   };
 
-  // Edit form change handler
   const handleEditFormChange = (e: any) => {
     const { name, value } = e.target;
     setEditForm((prev: any) => ({ ...prev, [name]: value }));
   };
 
-  // Edit form submit handler
   const handleEditVictim = async (e: any) => {
     e.preventDefault();
     setEditLoading(true);
+    setErrorMessage(null);
     try {
       await apiClient.put(`/victim/${editVictim.ID}`, {
         ...editForm,
         case_ids:
-          typeof editForm.case_ids === 'string'
+          typeof editForm.case_ids === "string"
             ? editForm.case_ids
-                .split(',')
+                .split(",")
                 .map((v: any) => Number(v.trim()))
                 .filter(Boolean)
             : editForm.case_ids,
@@ -207,26 +206,25 @@ export function VictimsTable() {
       setEditForm(null);
       mutate();
     } catch (err) {
-      // Optionally show error
+      setErrorMessage("Failed to update victim. Please try again.");
     }
     setEditLoading(false);
   };
 
-  // Delete handler
   const handleDeleteVictim = async () => {
     if (!deleteVictim) return;
     setDeleteLoading(true);
+    setErrorMessage(null);
     try {
       await apiClient.delete(`/victim/${deleteVictim.ID}`);
       setDeleteVictim(null);
       mutate();
     } catch (err) {
-      // Optionally show error
+      setErrorMessage("Failed to delete victim. Please try again.");
     }
     setDeleteLoading(false);
   };
 
-  // Open examination dialog for a victim
   const openExaminationDialog = (victim: any) => {
     setExaminationVictim(victim);
     setExaminationDialogOpen(true);
@@ -234,19 +232,18 @@ export function VictimsTable() {
     setExaminationEditId(null);
   };
 
-  // Handle examination form change
   const handleExaminationFormChange = (e: any) => {
     const { name, value, type, checked } = e.target;
     setExaminationForm((prev: any) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value,
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
-  // Handle create/edit examination
   const handleExaminationSubmit = async (e: any) => {
     e.preventDefault();
     setExaminationLoading(true);
+    setErrorMessage(null);
     try {
       const payload = {
         ...examinationForm,
@@ -258,249 +255,229 @@ export function VictimsTable() {
       if (examinationEditId) {
         await apiClient.put(`/examination/${examinationEditId}`, payload);
       } else {
-        await apiClient.post('/examination', payload);
+        await apiClient.post("/examination", payload);
       }
       setExaminationForm(null);
       setExaminationEditId(null);
       mutateExaminations();
-    } catch (err) {}
+    } catch (err) {
+      setErrorMessage("Failed to save examination. Please try again.");
+    }
     setExaminationLoading(false);
   };
 
-  // Handle delete examination
   const handleDeleteExamination = async (id: number) => {
     setExaminationLoading(true);
+    setErrorMessage(null);
     try {
       await apiClient.delete(`/examination/${id}`);
       mutateExaminations();
-    } catch (err) {}
+    } catch (err) {
+      setErrorMessage("Failed to delete examination. Please try again.");
+    }
     setExaminationLoading(false);
   };
 
-  if (isLoading) return <div>Loading...</div>;
-  if (error) return <div>Failed to load victims.</div>;
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortOrder("asc");
+    }
+  };
+
+  const sortedVictims = useMemo(() => {
+    if (!sortField) return victims;
+    return [...victims].sort((a, b) => {
+      const aValue = a[sortField] || "";
+      const bValue = b[sortField] || "";
+      if (sortOrder === "asc") {
+        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+      } else {
+        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+      }
+    });
+  }, [victims, sortField, sortOrder]);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-8 bg-gray-100">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-800"></div>
+      </div>
+    );
+  }
+  if (error) {
+    return <div className="text-red-500 text-center py-8 bg-gray-100">Failed to load victims.</div>;
+  }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6 p-6 bg-gray-100 min-h-screen">
+      {errorMessage && (
+        <div className="text-red-500 bg-red-100/50 p-3 rounded-lg text-center">
+          {errorMessage}
+        </div>
+      )}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
           <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-900" />
             <Input
               type="search"
               placeholder="Search victims..."
-              className="w-full pl-8 sm:w-[300px]"
+              className="w-full pl-10 sm:w-[300px] bg-white border-blue-200 text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-600 transition-all duration-300"
             />
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="ml-auto h-9">
-                <ChevronDown className="h-4 w-4" />
+              <Button variant="outline" className="ml-auto h-9 bg-white border-blue-200 text-blue-900 hover:bg-gray-200">
+                <ChevronDown className="h-4 w-4 text-blue-900" />
                 <span className="sr-only">Filter</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Filter by</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>Gender</DropdownMenuItem>
-              <DropdownMenuItem>Status</DropdownMenuItem>
+            <DropdownMenuContent align="end" className="bg-white border-blue-200 text-blue-900">
+              <DropdownMenuLabel className="text-blue-900">Filter by</DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-blue-200" />
+              <DropdownMenuItem className="hover:bg-gray-200 text-blue-900">Gender</DropdownMenuItem>
+              <DropdownMenuItem className="hover:bg-gray-200 text-blue-900">Status</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
         <div className="flex items-center gap-2">
-          <Select defaultValue="10">
-            <SelectTrigger className="h-9 w-[70px]">
+          <Select
+            defaultValue="10"
+            onValueChange={(value) => {
+              setPageSize(Number(value));
+              setPage(1);
+            }}
+          >
+            <SelectTrigger className="h-9 w-[70px] bg-white border-blue-200 text-blue-900 focus:ring-2 focus:ring-blue-600">
               <SelectValue placeholder="10" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="10">10</SelectItem>
-              <SelectItem value="20">20</SelectItem>
-              <SelectItem value="50">50</SelectItem>
-              <SelectItem value="100">100</SelectItem>
+            <SelectContent className="bg-white border-blue-200 text-blue-900">
+              <SelectItem value="10" className="text-blue-900">10</SelectItem>
+              <SelectItem value="20" className="text-blue-900">20</SelectItem>
+              <SelectItem value="50" className="text-blue-900">50</SelectItem>
+              <SelectItem value="100" className="text-blue-900">100</SelectItem>
             </SelectContent>
           </Select>
-          <Button onClick={() => setAddDialogOpen(true)}>
+          <Button
+            onClick={() => setAddDialogOpen(true)}
+            className="bg-blue-800 hover:bg-blue-900 text-white transition-all duration-300"
+          >
             <Plus className="mr-2 h-4 w-4" /> Add Victim
           </Button>
         </div>
       </div>
 
-      <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add Victim</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleAddVictim} className="space-y-2">
-            <Input
-              name="first_name"
-              placeholder="First Name"
-              value={victimForm.first_name}
-              onChange={handleVictimFormChange}
-              required
-            />
-            <Input
-              name="last_name"
-              placeholder="Last Name"
-              value={victimForm.last_name}
-              onChange={handleVictimFormChange}
-              required
-            />
-            <Input
-              name="gender"
-              placeholder="Gender"
-              value={victimForm.gender}
-              onChange={handleVictimFormChange}
-              required
-            />
-            <Input
-              name="dob"
-              type="date"
-              placeholder="Date of Birth"
-              value={victimForm.dob}
-              onChange={handleVictimFormChange}
-              required
-            />
-            <Input
-              name="phone_number"
-              placeholder="Phone Number"
-              value={victimForm.phone_number}
-              onChange={handleVictimFormChange}
-              required
-            />
-            <Input
-              name="nin"
-              placeholder="NIN"
-              value={victimForm.nin}
-              onChange={handleVictimFormChange}
-              required
-            />
-            <Input
-              name="nationality"
-              placeholder="Nationality"
-              value={victimForm.nationality}
-              onChange={handleVictimFormChange}
-              required
-            />
-            <Input
-              name="address"
-              placeholder="Address"
-              value={victimForm.address}
-              onChange={handleVictimFormChange}
-              required
-            />
-            <Input
-              name="created_by"
-              placeholder="Created By"
-              value={victimForm.created_by}
-              onChange={handleVictimFormChange}
-              required
-            />
-            <Input
-              name="updated_by"
-              placeholder="Updated By"
-              value={victimForm.updated_by}
-              onChange={handleVictimFormChange}
-              required
-            />
-            <Input
-              name="case_ids"
-              placeholder="Case IDs (comma separated)"
-              value={victimForm.case_ids.join(',')}
-              onChange={(e) =>
-                setVictimForm((f) => ({
-                  ...f,
-                  case_ids: e.target.value
-                    .split(',')
-                    .map((v) => Number(v.trim()))
-                    .filter(Boolean),
-                }))
-              }
-            />
-            <DialogFooter className="mt-2">
-              <DialogClose asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setAddDialogOpen(false)}
-                  disabled={formLoading}
-                >
-                  Cancel
-                </Button>
-              </DialogClose>
-              <Button type="submit" disabled={formLoading}>
-                {formLoading ? 'Saving...' : 'Save'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      <div className="rounded-md border">
+      <div className="rounded-xl border border-blue-200 bg-white shadow-lg">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead className="w-[40px]">
+            <TableRow className="border-b border-blue-200 hover:bg-gray-200">
+              <TableHead className="w-[40px] text-blue-900">
                 <Checkbox
-                  checked={
-                    selectedVictims.length === victims.length &&
-                    victims.length > 0
-                  }
+                  checked={selectedVictims.length === victims.length && victims.length > 0}
                   onCheckedChange={toggleSelectAll}
+                  className="border-blue-200 text-blue-600"
                 />
               </TableHead>
-              <TableHead>ID</TableHead>
-              <TableHead>First Name</TableHead>
-              <TableHead>Last Name</TableHead>
-              <TableHead>Gender</TableHead>
-              <TableHead>Date of Birth</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Officer</TableHead>
-              <TableHead className="w-[40px]"></TableHead>
+              <TableHead className="text-blue-900">
+                <button onClick={() => handleSort("ID")} className="flex items-center gap-1">
+                  ID
+                  {sortField === "ID" && <ArrowUpDown className="h-4 w-4 text-blue-900" />}
+                </button>
+              </TableHead>
+              <TableHead className="text-blue-900">
+                <button onClick={() => handleSort("first_name")} className="flex items-center gap-1">
+                  First Name
+                  {sortField === "first_name" && <ArrowUpDown className="h-4 w-4 text-blue-900" />}
+                </button>
+              </TableHead>
+              <TableHead className="text-blue-900">
+                <button onClick={() => handleSort("last_name")} className="flex items-center gap-1">
+                  Last Name
+                  {sortField === "last_name" && <ArrowUpDown className="h-4 w-4 text-blue-900" />}
+                </button>
+              </TableHead>
+              <TableHead className="text-blue-900">
+                <button onClick={() => handleSort("gender")} className="flex items-center gap-1">
+                  Gender
+                  {sortField === "gender" && <ArrowUpDown className="h-4 w-4 text-blue-900" />}
+                </button>
+              </TableHead>
+              <TableHead className="text-blue-900">
+                <button onClick={() => handleSort("dob")} className="flex items-center gap-1">
+                  Date of Birth
+                  {sortField === "dob" && <ArrowUpDown className="h-4 w-4 text-blue-900" />}
+                </button>
+              </TableHead>
+              <TableHead className="text-blue-900">
+                <button onClick={() => handleSort("status")} className="flex items-center gap-1">
+                  Status
+                  {sortField === "status" && <ArrowUpDown className="h-4 w-4 text-blue-900" />}
+                </button>
+              </TableHead>
+              <TableHead className="text-blue-900">
+                <button onClick={() => handleSort("created_by")} className="flex items-center gap-1">
+                  Officer
+                  {sortField === "created_by" && <ArrowUpDown className="h-4 w-4 text-blue-900" />}
+                </button>
+              </TableHead>
+              <TableHead className="w-[40px] text-blue-900"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {victims.map((victim: any) => (
-              <TableRow key={victim.ID}>
+            {sortedVictims.map((victim: any) => (
+              <TableRow
+                key={victim.ID} // Ensure ID is used and unique
+                className="border-t border-blue-200 hover:bg-gray-200 transition-all duration-200"
+              >
                 <TableCell>
                   <Checkbox
                     checked={selectedVictims.includes(victim.ID.toString())}
-                    onCheckedChange={() =>
-                      toggleSelectVictim(victim.ID.toString())
-                    }
+                    onCheckedChange={() => toggleSelectVictim(victim.ID.toString())}
+                    className="border-blue-200 text-blue-600"
                   />
                 </TableCell>
-                <TableCell className="font-medium">{victim.ID}</TableCell>
-                <TableCell>{victim.first_name}</TableCell>
-                <TableCell>{victim.last_name}</TableCell>
-                <TableCell>{victim.gender}</TableCell>
-                <TableCell>
-                  {victim.dob ? new Date(victim.dob).toLocaleDateString() : ''}
+                <TableCell className="font-medium text-blue-900">{victim.ID}</TableCell>
+                <TableCell className="text-blue-900">{victim.first_name}</TableCell>
+                <TableCell className="text-blue-900">{victim.last_name}</TableCell>
+                <TableCell className="text-blue-900">{victim.gender}</TableCell>
+                <TableCell className="text-blue-900">
+                  {victim.dob ? new Date(victim.dob).toLocaleDateString() : ""}
                 </TableCell>
-                <TableCell>{victim.status || ''}</TableCell>
-                <TableCell>{victim.created_by}</TableCell>
+                <TableCell className="text-blue-900">{victim.status || ""}</TableCell>
+                <TableCell className="text-blue-900">{victim.created_by}</TableCell>
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
+                      <Button variant="ghost" size="icon" className="text-blue-900 hover:bg-gray-200">
+                        <MoreHorizontal className="h-4 w-4 text-blue-900" />
                         <span className="sr-only">Actions</span>
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => setViewVictim(victim)}>
+                    <DropdownMenuContent align="end" className="bg-white border-blue-200 text-blue-900">
+                      <DropdownMenuItem
+                        onClick={() => setViewVictim(victim)}
+                        className="hover:bg-gray-200 text-blue-900"
+                      >
                         View
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => openEditDialog(victim)}>
+                      <DropdownMenuItem
+                        onClick={() => openEditDialog(victim)}
+                        className="hover:bg-gray-200 text-blue-900"
+                      >
                         Edit
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => openExaminationDialog(victim)}
+                        className="hover:bg-gray-200 text-blue-900"
                       >
                         Examination
                       </DropdownMenuItem>
-                      <DropdownMenuSeparator />
+                      <DropdownMenuSeparator className="bg-blue-200" />
                       <DropdownMenuItem
-                        className="text-destructive"
+                        className="text-red-500 hover:bg-red-100"
                         onClick={() => setDeleteVictim(victim)}
                       >
                         Delete
@@ -514,86 +491,99 @@ export function VictimsTable() {
         </Table>
       </div>
 
-      <div className="flex items-center justify-between">
-        <div className="text-sm text-muted-foreground">
-          Showing <strong>1</strong> to <strong>{victims.length}</strong> of{' '}
-          <strong>{victims.length}</strong> results
+      <div className="flex items-center justify-between text-blue-900">
+        <div className="text-sm">
+          Showing <strong>{(page - 1) * pageSize + 1}</strong> to{" "}
+          <strong>{Math.min(page * pageSize, totalVictims)}</strong> of{" "}
+          <strong>{totalVictims}</strong> results
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" disabled>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page === 1}
+            onClick={() => setPage(page - 1)}
+            className="bg-white border-blue-200 text-blue-900 hover:bg-gray-200"
+          >
             Previous
           </Button>
-          <Button variant="outline" size="sm" disabled>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page * pageSize >= totalVictims}
+            onClick={() => setPage(page + 1)}
+            className="bg-white border-blue-200 text-blue-900 hover:bg-gray-200"
+          >
             Next
           </Button>
         </div>
       </div>
 
-      {/* View Victim Dialog */}
       <Dialog open={!!viewVictim} onOpenChange={() => setViewVictim(null)}>
-        <DialogContent>
+        <DialogContent className="bg-white border-blue-200 text-blue-900">
           <DialogHeader>
-            <DialogTitle>Victim Details</DialogTitle>
+            <DialogTitle className="text-blue-900">Victim Details</DialogTitle>
           </DialogHeader>
           {viewVictim && (
             <div className="space-y-2">
               <div>
-                <strong>ID:</strong> {viewVictim.ID}
+                <strong className="text-blue-900">ID:</strong> {viewVictim.ID}
               </div>
               <div>
-                <strong>First Name:</strong> {viewVictim.first_name}
+                <strong className="text-blue-900">First Name:</strong> {viewVictim.first_name}
               </div>
               <div>
-                <strong>Last Name:</strong> {viewVictim.last_name}
+                <strong className="text-blue-900">Last Name:</strong> {viewVictim.last_name}
               </div>
               <div>
-                <strong>Gender:</strong> {viewVictim.gender}
+                <strong className="text-blue-900">Gender:</strong> {viewVictim.gender}
               </div>
               <div>
-                <strong>Date of Birth:</strong>{' '}
-                {viewVictim.dob
-                  ? new Date(viewVictim.dob).toLocaleDateString()
-                  : ''}
+                <strong className="text-blue-900">Date of Birth:</strong>{" "}
+                {viewVictim.dob ? new Date(viewVictim.dob).toLocaleDateString() : ""}
               </div>
               <div>
-                <strong>Phone Number:</strong> {viewVictim.phone_number}
+                <strong className="text-blue-900">Phone Number:</strong> {viewVictim.phone_number}
               </div>
               <div>
-                <strong>NIN:</strong> {viewVictim.nin}
+                <strong className="text-blue-900">NIN:</strong> {viewVictim.nin}
               </div>
               <div>
-                <strong>Nationality:</strong> {viewVictim.nationality}
+                <strong className="text-blue-900">Nationality:</strong> {viewVictim.nationality}
               </div>
               <div>
-                <strong>Address:</strong> {viewVictim.address}
+                <strong className="text-blue-900">Address:</strong> {viewVictim.address}
               </div>
               <div>
-                <strong>Created By:</strong> {viewVictim.created_by}
+                <strong className="text-blue-900">Created By:</strong> {viewVictim.created_by}
               </div>
               <div>
-                <strong>Updated By:</strong> {viewVictim.updated_by}
+                <strong className="text-blue-900">Updated By:</strong> {viewVictim.updated_by}
               </div>
               <div>
-                <strong>Case IDs:</strong>{' '}
+                <strong className="text-blue-900">Case IDs:</strong>{" "}
                 {Array.isArray(viewVictim.case_ids)
-                  ? viewVictim.case_ids.join(', ')
+                  ? viewVictim.case_ids.join(", ")
                   : viewVictim.case_ids}
               </div>
               <div>
-                <strong>Status:</strong> {viewVictim.status || ''}
+                <strong className="text-blue-900">Status:</strong> {viewVictim.status || ""}
               </div>
-              {/* Examinations for this victim */}
               <div className="mt-4">
-                <strong>Examinations:</strong>
+                <strong className="text-blue-900">Examinations:</strong>
                 <ul className="list-disc ml-4">
                   <ExaminationsList victimId={viewVictim.ID} />
                 </ul>
               </div>
             </div>
           )}
-          <DialogFooter className="mt-2">
+          <DialogFooter className="mt-4">
             <DialogClose asChild>
-              <Button type="button" variant="outline">
+              <Button
+                type="button"
+                variant="outline"
+                className="bg-white border-blue-200 text-blue-900 hover:bg-gray-200"
+              >
                 Close
               </Button>
             </DialogClose>
@@ -601,7 +591,147 @@ export function VictimsTable() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Victim Dialog */}
+      <Dialog
+        open={addDialogOpen}
+        onOpenChange={() => {
+          setAddDialogOpen(false);
+          setVictimForm({
+            address: "",
+            case_ids: [],
+            created_by: "",
+            dob: "",
+            first_name: "",
+            gender: "",
+            last_name: "",
+            nationality: "",
+            nin: "",
+            phone_number: "",
+            updated_by: "",
+          });
+        }}
+      >
+        <DialogContent className="bg-white border-blue-200 text-blue-900">
+          <DialogHeader>
+            <DialogTitle className="text-blue-900">Add Victim</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleAddVictim} className="space-y-4">
+            <Input
+              name="first_name"
+              placeholder="First Name"
+              value={victimForm.first_name}
+              onChange={handleVictimFormChange}
+              required
+              className="bg-white border-blue-200 text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-600"
+            />
+            <Input
+              name="last_name"
+              placeholder="Last Name"
+              value={victimForm.last_name}
+              onChange={handleVictimFormChange}
+              required
+              className="bg-white border-blue-200 text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-600"
+            />
+            <Input
+              name="gender"
+              placeholder="Gender"
+              value={victimForm.gender}
+              onChange={handleVictimFormChange}
+              required
+              className="bg-white border-blue-200 text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-600"
+            />
+            <Input
+              name="dob"
+              type="date"
+              placeholder="Date of Birth"
+              value={victimForm.dob}
+              onChange={handleVictimFormChange}
+              required
+              className="bg-white border-blue-200 text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-600"
+            />
+            <Input
+              name="phone_number"
+              placeholder="Phone Number"
+              value={victimForm.phone_number}
+              onChange={handleVictimFormChange}
+              required
+              className="bg-white border-blue-200 text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-600"
+            />
+            <Input
+              name="nin"
+              placeholder="NIN"
+              value={victimForm.nin}
+              onChange={handleVictimFormChange}
+              required
+              className="bg-white border-blue-200 text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-600"
+            />
+            <Input
+              name="nationality"
+              placeholder="Nationality"
+              value={victimForm.nationality}
+              onChange={handleVictimFormChange}
+              required
+              className="bg-white border-blue-200 text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-600"
+            />
+            <Input
+              name="address"
+              placeholder="Address"
+              value={victimForm.address}
+              onChange={handleVictimFormChange}
+              required
+              className="bg-white border-blue-200 text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-600"
+            />
+            <Input
+              name="created_by"
+              placeholder="Created By"
+              value={victimForm.created_by}
+              onChange={handleVictimFormChange}
+              required
+              className="bg-white border-blue-200 text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-600"
+            />
+            <Input
+              name="updated_by"
+              placeholder="Updated By"
+              value={victimForm.updated_by}
+              onChange={handleVictimFormChange}
+              required
+              className="bg-white border-blue-200 text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-600"
+            />
+            <Input
+              name="case_ids"
+              placeholder="Case IDs (comma separated)"
+              value={
+                Array.isArray(victimForm.case_ids)
+                  ? victimForm.case_ids.join(",")
+                  : victimForm.case_ids
+              }
+              onChange={(e) =>
+                setVictimForm((f: any) => ({ ...f, case_ids: e.target.value }))
+              }
+              className="bg-white border-blue-200 text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-600"
+            />
+            <DialogFooter className="mt-4">
+              <DialogClose asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={formLoading}
+                  className="bg-white border-blue-200 text-blue-900 hover:bg-gray-200"
+                >
+                  Cancel
+                </Button>
+              </DialogClose>
+              <Button
+                type="submit"
+                disabled={formLoading}
+                className="bg-blue-800 hover:bg-blue-900 text-white"
+              >
+                {formLoading ? "Saving..." : "Save"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       <Dialog
         open={!!editVictim}
         onOpenChange={() => {
@@ -609,18 +739,19 @@ export function VictimsTable() {
           setEditForm(null);
         }}
       >
-        <DialogContent>
+        <DialogContent className="bg-white border-blue-200 text-blue-900">
           <DialogHeader>
-            <DialogTitle>Edit Victim</DialogTitle>
+            <DialogTitle className="text-blue-900">Edit Victim</DialogTitle>
           </DialogHeader>
           {editForm && (
-            <form onSubmit={handleEditVictim} className="space-y-2">
+            <form onSubmit={handleEditVictim} className="space-y-4">
               <Input
                 name="first_name"
                 placeholder="First Name"
                 value={editForm.first_name}
                 onChange={handleEditFormChange}
                 required
+                className="bg-white border-blue-200 text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-600"
               />
               <Input
                 name="last_name"
@@ -628,6 +759,7 @@ export function VictimsTable() {
                 value={editForm.last_name}
                 onChange={handleEditFormChange}
                 required
+                className="bg-white border-blue-200 text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-600"
               />
               <Input
                 name="gender"
@@ -635,6 +767,7 @@ export function VictimsTable() {
                 value={editForm.gender}
                 onChange={handleEditFormChange}
                 required
+                className="bg-white border-blue-200 text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-600"
               />
               <Input
                 name="dob"
@@ -643,6 +776,7 @@ export function VictimsTable() {
                 value={editForm.dob}
                 onChange={handleEditFormChange}
                 required
+                className="bg-white border-blue-200 text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-600"
               />
               <Input
                 name="phone_number"
@@ -650,6 +784,7 @@ export function VictimsTable() {
                 value={editForm.phone_number}
                 onChange={handleEditFormChange}
                 required
+                className="bg-white border-blue-200 text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-600"
               />
               <Input
                 name="nin"
@@ -657,6 +792,7 @@ export function VictimsTable() {
                 value={editForm.nin}
                 onChange={handleEditFormChange}
                 required
+                className="bg-white border-blue-200 text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-600"
               />
               <Input
                 name="nationality"
@@ -664,6 +800,7 @@ export function VictimsTable() {
                 value={editForm.nationality}
                 onChange={handleEditFormChange}
                 required
+                className="bg-white border-blue-200 text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-600"
               />
               <Input
                 name="address"
@@ -671,6 +808,7 @@ export function VictimsTable() {
                 value={editForm.address}
                 onChange={handleEditFormChange}
                 required
+                className="bg-white border-blue-200 text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-600"
               />
               <Input
                 name="created_by"
@@ -678,6 +816,7 @@ export function VictimsTable() {
                 value={editForm.created_by}
                 onChange={handleEditFormChange}
                 required
+                className="bg-white border-blue-200 text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-600"
               />
               <Input
                 name="updated_by"
@@ -685,20 +824,22 @@ export function VictimsTable() {
                 value={editForm.updated_by}
                 onChange={handleEditFormChange}
                 required
+                className="bg-white border-blue-200 text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-600"
               />
               <Input
                 name="case_ids"
                 placeholder="Case IDs (comma separated)"
                 value={
                   Array.isArray(editForm.case_ids)
-                    ? editForm.case_ids.join(',')
+                    ? editForm.case_ids.join(",")
                     : editForm.case_ids
                 }
                 onChange={(e) =>
                   setEditForm((f: any) => ({ ...f, case_ids: e.target.value }))
                 }
+                className="bg-white border-blue-200 text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-600"
               />
-              <DialogFooter className="mt-2">
+              <DialogFooter className="mt-4">
                 <DialogClose asChild>
                   <Button
                     type="button"
@@ -708,12 +849,17 @@ export function VictimsTable() {
                       setEditForm(null);
                     }}
                     disabled={editLoading}
+                    className="bg-white border-blue-200 text-blue-900 hover:bg-gray-200"
                   >
                     Cancel
                   </Button>
                 </DialogClose>
-                <Button type="submit" disabled={editLoading}>
-                  {editLoading ? 'Saving...' : 'Save'}
+                <Button
+                  type="submit"
+                  disabled={editLoading}
+                  className="bg-blue-800 hover:bg-blue-900 text-white"
+                >
+                  {editLoading ? "Saving..." : "Save"}
                 </Button>
               </DialogFooter>
             </form>
@@ -721,16 +867,22 @@ export function VictimsTable() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
       <Dialog open={!!deleteVictim} onOpenChange={() => setDeleteVictim(null)}>
-        <DialogContent>
+        <DialogContent className="bg-white border-blue-200 text-blue-900">
           <DialogHeader>
-            <DialogTitle>Delete Victim</DialogTitle>
+            <DialogTitle className="text-blue-900">Delete Victim</DialogTitle>
           </DialogHeader>
-          <div>Are you sure you want to delete this victim?</div>
-          <DialogFooter className="mt-2">
+          <div className="text-blue-900">
+            Are you sure you want to delete this victim?
+          </div>
+          <DialogFooter className="mt-4">
             <DialogClose asChild>
-              <Button type="button" variant="outline" disabled={deleteLoading}>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={deleteLoading}
+                className="bg-white border-blue-200 text-blue-900 hover:bg-gray-200"
+              >
                 Cancel
               </Button>
             </DialogClose>
@@ -739,53 +891,53 @@ export function VictimsTable() {
               variant="destructive"
               onClick={handleDeleteVictim}
               disabled={deleteLoading}
+              className="bg-red-600 hover:bg-red-700 text-white"
             >
-              {deleteLoading ? 'Deleting...' : 'Delete'}
+              {deleteLoading ? "Deleting..." : "Delete"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Examination Dialog */}
       <Dialog
         open={examinationDialogOpen}
         onOpenChange={setExaminationDialogOpen}
       >
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl bg-white border-blue-200 text-blue-900">
           <DialogHeader>
-            <DialogTitle>
-              Examinations for {examinationVictim?.first_name}{' '}
+            <DialogTitle className="text-blue-900">
+              Examinations for {examinationVictim?.first_name}{" "}
               {examinationVictim?.last_name}
             </DialogTitle>
           </DialogHeader>
-          {/* List of examinations */}
-          <div className="mb-2">
+          <div className="mb-4">
             {examinations.length === 0 && (
-              <div className="text-muted-foreground">
-                No examinations found.
-              </div>
+              <div className="text-blue-400">No examinations found.</div>
             )}
             {examinations.length > 0 && (
-              <table className="w-full text-sm border">
+              <table className="w-full text-sm border border-blue-200 rounded-lg">
                 <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Findings</th>
-                    <th>Practitioner</th>
-                    <th></th>
+                  <tr className="bg-gray-200">
+                    <th className="p-2 text-left text-blue-900">Date</th>
+                    <th className="p-2 text-left text-blue-900">Findings</th>
+                    <th className="p-2 text-left text-blue-900">Practitioner</th>
+                    <th className="p-2 text-left text-blue-900"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {examinations.map((exam: any) => (
-                    <tr key={exam.ID} className="border-t">
-                      <td>
+                    <tr
+                      key={exam.ID} // Ensure unique key
+                      className="border-t border-blue-200 hover:bg-gray-200"
+                    >
+                      <td className="p-2 text-blue-900">
                         {exam.exam_date
                           ? new Date(exam.exam_date).toLocaleDateString()
-                          : ''}
+                          : ""}
                       </td>
-                      <td>{exam.findings}</td>
-                      <td>{exam.practitioner_id}</td>
-                      <td>
+                      <td className="p-2 text-blue-900">{exam.findings}</td>
+                      <td className="p-2 text-blue-900">{exam.practitioner_id}</td>
+                      <td className="p-2">
                         <Button
                           size="sm"
                           variant="outline"
@@ -793,13 +945,14 @@ export function VictimsTable() {
                             setExaminationForm(exam);
                             setExaminationEditId(exam.ID);
                           }}
+                          className="bg-white border-blue-200 text-blue-900 hover:bg-gray-200"
                         >
                           Edit
                         </Button>
                         <Button
                           size="sm"
                           variant="destructive"
-                          className="ml-2"
+                          className="ml-2 bg-red-600 hover:bg-red-700 text-white"
                           onClick={() => handleDeleteExamination(exam.ID)}
                           disabled={examinationLoading}
                         >
@@ -812,49 +965,52 @@ export function VictimsTable() {
               </table>
             )}
           </div>
-          {/* Add/Edit Examination Form */}
-          <div className="border-t pt-2 mt-2">
+          <div className="border-t border-blue-200 pt-4 mt-4">
             <Button
               size="sm"
               onClick={() => {
                 setExaminationForm({
-                  case_id: '',
+                  case_id: "",
                   consent_given: false,
-                  exam_date: '',
-                  facility_id: '',
-                  findings: '',
-                  practitioner_id: '',
-                  referral: '',
-                  treatment: '',
+                  exam_date: "",
+                  facility_id: "",
+                  findings: "",
+                  practitioner_id: "",
+                  referral: "",
+                  treatment: "",
                 });
                 setExaminationEditId(null);
               }}
+              className="bg-blue-800 hover:bg-blue-900 text-white"
             >
               Add Examination
             </Button>
             {examinationForm && (
-              <form
-                onSubmit={handleExaminationSubmit}
-                className="space-y-2 mt-2"
-              >
+              <form onSubmit={handleExaminationSubmit} className="space-y-4 mt-4">
                 <div>
-                  <label
+                  <Label
                     htmlFor="case_id"
-                    className="block text-sm font-medium"
+                    className="block text-sm font-medium text-blue-900"
                   >
                     Case
-                  </label>
+                  </Label>
                   <select
                     id="case_id"
                     name="case_id"
                     value={examinationForm.case_id}
                     onChange={handleExaminationFormChange}
                     required
-                    className="w-full border rounded px-2 py-1"
+                    className="w-full border border-blue-200 rounded-lg px-2 py-1 bg-white text-blue-900 focus:ring-2 focus:ring-blue-600"
                   >
-                    <option value="">Select case</option>
+                    <option value="" className="text-blue-400">
+                      Select case
+                    </option>
                     {cases.map((c: any) => (
-                      <option key={c.id ?? c.ID} value={c.id ?? c.ID}>
+                      <option
+                        key={c.id ?? c.ID} // Ensure unique key
+                        value={c.id ?? c.ID}
+                        className="text-blue-900"
+                      >
                         {c.case_number
                           ? `${c.case_number} - ${c.title}`
                           : c.id ?? c.ID}
@@ -863,13 +1019,18 @@ export function VictimsTable() {
                   </select>
                 </div>
                 <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     name="consent_given"
                     checked={!!examinationForm.consent_given}
-                    onChange={handleExaminationFormChange}
-                  />{' '}
-                  Consent Given
+                    onCheckedChange={(checked) =>
+                      setExaminationForm((prev: any) => ({
+                        ...prev,
+                        consent_given: checked,
+                      }))
+                    }
+                    className="border-blue-200 text-blue-600"
+                  />
+                  <span className="text-blue-900">Consent Given</span>
                 </label>
                 <Input
                   name="exam_date"
@@ -878,49 +1039,61 @@ export function VictimsTable() {
                   value={examinationForm.exam_date}
                   onChange={handleExaminationFormChange}
                   required
+                  className="bg-white border-blue-200 text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-600"
                 />
-                {/* Facility dropdown */}
                 <div>
-                  <label
+                  <Label
                     htmlFor="facility_id"
-                    className="block text-sm font-medium"
+                    className="block text-sm font-medium text-blue-900"
                   >
                     Facility
-                  </label>
+                  </Label>
                   <select
                     id="facility_id"
                     name="facility_id"
                     value={examinationForm.facility_id}
                     onChange={handleExaminationFormChange}
                     required
-                    className="w-full border rounded px-2 py-1"
+                    className="w-full border border-blue-200 rounded-lg px-2 py-1 bg-white text-blue-900 focus:ring-2 focus:ring-blue-600"
                   >
-                    <option value="">Select facility</option>
+                    <option value="" className="text-blue-400">
+                      Select facility
+                    </option>
                     {facilities.map((f: any) => (
-                      <option key={f.id ?? f.ID} value={f.id ?? f.ID}>
+                      <option
+                        key={f.id ?? f.ID} // Ensure unique key
+                        value={f.id ?? f.ID}
+                        className="text-blue-900"
+                      >
                         {f.name}
                       </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label
+                  <Label
                     htmlFor="practitioner_id"
-                    className="block text-sm font-medium"
+                    className="block text-sm font-medium text-blue-900"
                   >
                     Practitioner
-                  </label>
+                  </Label>
                   <select
                     id="practitioner_id"
                     name="practitioner_id"
                     value={examinationForm.practitioner_id}
                     onChange={handleExaminationFormChange}
                     required
-                    className="w-full border rounded px-2 py-1"
+                    className="w-full border border-blue-200 rounded-lg px-2 py-1 bg-white text-blue-900 focus:ring-2 focus:ring-blue-600"
                   >
-                    <option value="">Select practitioner</option>
+                    <option value="" className="text-blue-400">
+                      Select practitioner
+                    </option>
                     {practitioners.map((p: any) => (
-                      <option key={p.id ?? p.ID} value={p.id ?? p.ID}>
+                      <option
+                        key={p.id ?? p.ID} // Ensure unique key
+                        value={p.id ?? p.ID}
+                        className="text-blue-900"
+                      >
                         {p.first_name} {p.last_name}
                       </option>
                     ))}
@@ -932,22 +1105,29 @@ export function VictimsTable() {
                   value={examinationForm.findings}
                   onChange={handleExaminationFormChange}
                   required
+                  className="bg-white border-blue-200 text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-600"
                 />
                 <Input
                   name="referral"
                   placeholder="Referral"
                   value={examinationForm.referral}
                   onChange={handleExaminationFormChange}
+                  className="bg-white border-blue-200 text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-600"
                 />
                 <Input
                   name="treatment"
                   placeholder="Treatment"
                   value={examinationForm.treatment}
                   onChange={handleExaminationFormChange}
+                  className="bg-white border-blue-200 text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-600"
                 />
                 <DialogFooter>
-                  <Button type="submit" disabled={examinationLoading}>
-                    {examinationEditId ? 'Update' : 'Create'}
+                  <Button
+                    type="submit"
+                    disabled={examinationLoading}
+                    className="bg-blue-800 hover:bg-blue-900 text-white"
+                  >
+                    {examinationEditId ? "Update" : "Create"}
                   </Button>
                   <Button
                     type="button"
@@ -957,6 +1137,7 @@ export function VictimsTable() {
                       setExaminationEditId(null);
                     }}
                     disabled={examinationLoading}
+                    className="bg-white border-blue-200 text-blue-900 hover:bg-gray-200"
                   >
                     Cancel
                   </Button>
@@ -970,7 +1151,6 @@ export function VictimsTable() {
   );
 }
 
-// Helper component to show examinations in victim details
 function ExaminationsList({ victimId }: { victimId: number }) {
   const { data } = useSWRImmutable(
     `/examinations/search?victim_id=${victimId}`,
@@ -978,12 +1158,14 @@ function ExaminationsList({ victimId }: { victimId: number }) {
   );
   const examinations = data?.data || [];
   if (!examinations.length)
-    return <li className="text-muted-foreground">No examinations found.</li>;
+    return <li className="text-blue-400">No examinations found.</li>;
   return (
     <>
       {examinations.map((exam: any, idx: number) => (
-        <li key={exam.ID ?? idx}>
-          {exam.exam_date ? new Date(exam.exam_date).toLocaleDateString() : ''}{' '}
+        <li key={exam.ID ?? idx} className="text-blue-900">
+          {exam.exam_date
+            ? new Date(exam.exam_date).toLocaleDateString()
+            : ""}{" "}
           - {exam.findings}
         </li>
       ))}

@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const activities = [
   {
@@ -58,27 +58,32 @@ const activities = [
     target: "Strategic Partnership Deal",
     time: "2 days ago",
   },
-]
+];
 
 export function RecentActivities() {
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 bg-gray-100 p-4 rounded-lg border border-blue-200">
       {activities.map((activity) => (
-        <div key={activity.id} className="flex items-start gap-4">
-          <Avatar className="h-8 w-8">
+        <div
+          key={activity.id}
+          className="flex items-start gap-4 p-2 hover:bg-gray-200 rounded-md transition-colors"
+        >
+          <Avatar className="h-8 w-8 border border-blue-200">
             <AvatarImage src={activity.user.image} alt={activity.user.name} />
-            <AvatarFallback>{activity.user.initials}</AvatarFallback>
+            <AvatarFallback className="bg-blue-600 text-white">
+              {activity.user.initials}
+            </AvatarFallback>
           </Avatar>
           <div className="grid gap-1">
             <p className="text-sm">
-              <span className="font-medium">{activity.user.name}</span> {activity.action}{" "}
-              <span className="font-medium">{activity.target}</span>
+              <span className="font-medium text-blue-900">{activity.user.name}</span>{" "}
+              <span className="text-gray-600">{activity.action}</span>{" "}
+              <span className="font-medium text-blue-900">{activity.target}</span>
             </p>
-            <p className="text-xs text-muted-foreground">{activity.time}</p>
+            <p className="text-xs text-gray-600">{activity.time}</p>
           </div>
         </div>
       ))}
     </div>
-  )
+  );
 }
-

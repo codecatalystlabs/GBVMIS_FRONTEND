@@ -36,13 +36,14 @@ export function DashboardOverview() {
   // Fetch counts for each entity
   const { data: victimsData } = useSWR("/victims", fetcher);
   const { data: casesData } = useSWR("/cases", fetcher);
-  const router = useRouter()
+  const router = useRouter();
   const { data: suspectsData } = useSWR("/suspects", fetcher);
   const { data: officersData } = useSWR("/police-officers", fetcher);
   const { data: facilitiesData } = useSWR("/health-facilities", fetcher);
   const { data: examinationsData } = useSWR("/examinations", fetcher);
   const { data: postsData } = useSWR("/police-posts", fetcher);
   const { data: chargesData } = useSWR("/charges", fetcher);
+  const { data: toxicologicalExamsData } = useSWR("/toxicological-exams", fetcher); // Added for Toxicological & Forensic Exam
 
   const victimsCount = victimsData?.data?.length || 0;
   const casesCount = casesData?.data?.length || 0;
@@ -52,6 +53,7 @@ export function DashboardOverview() {
   const examinationsCount = examinationsData?.data?.length || 0;
   const postsCount = postsData?.data?.length || 0;
   const chargesCount = chargesData?.data?.length || 0;
+  const toxicologicalExamsCount = toxicologicalExamsData?.data?.length || 0; 
 
   // Prepare cases per police post for a simple bar chart
   let casesPerPost: Record<string, number> = {};
@@ -72,7 +74,10 @@ export function DashboardOverview() {
   return (
     <div className="flex flex-col gap-6 p-6 bg-gray-100 rounded-xl shadow-lg">
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card onClick={()=> router.push("/dashboard/policePosts")} className="border-blue-200">
+        <Card
+          onClick={() => router.push("/dashboard/policePosts")}
+          className="border-blue-200"
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-white">
             <CardTitle className="text-sm font-medium text-blue-900">
               Police Posts
@@ -83,7 +88,10 @@ export function DashboardOverview() {
             <div className="text-2xl font-bold text-blue-900">{postsCount}</div>
           </CardContent>
         </Card>
-        <Card onClick={()=> router.push("/dashboard/police-officer")} className="border-blue-200">
+        <Card
+          onClick={() => router.push("/dashboard/police-officer")}
+          className="border-blue-200"
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-white">
             <CardTitle className="text-sm font-medium text-blue-900">
               Police Officers
@@ -94,7 +102,10 @@ export function DashboardOverview() {
             <div className="text-2xl font-bold text-blue-900">{officersCount}</div>
           </CardContent>
         </Card>
-        <Card onClick={()=> router.push("/dashboard/cases")} className="border-blue-200">
+        <Card
+          onClick={() => router.push("/dashboard/cases")}
+          className="border-blue-200"
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-white">
             <CardTitle className="text-sm font-medium text-blue-900">Cases</CardTitle>
             <FileText className="h-4 w-4 text-blue-400" />
@@ -103,7 +114,10 @@ export function DashboardOverview() {
             <div className="text-2xl font-bold text-blue-900">{casesCount}</div>
           </CardContent>
         </Card>
-        <Card onClick={()=> router.push("/dashboard/victims")} className="border-blue-200">
+        <Card
+          onClick={() => router.push("/dashboard/victims")}
+          className="border-blue-200"
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-white">
             <CardTitle className="text-sm font-medium text-blue-900">Victims</CardTitle>
             <Users className="h-4 w-4 text-blue-400" />
@@ -112,7 +126,10 @@ export function DashboardOverview() {
             <div className="text-2xl font-bold text-blue-900">{victimsCount}</div>
           </CardContent>
         </Card>
-        <Card onClick={()=> router.push("/dashboard/suspects")} className="border-blue-200">
+        <Card
+          onClick={() => router.push("/dashboard/suspects")}
+          className="border-blue-200"
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-white">
             <CardTitle className="text-sm font-medium text-blue-900">Suspects</CardTitle>
             <UserCheck className="h-4 w-4 text-blue-400" />
@@ -121,7 +138,10 @@ export function DashboardOverview() {
             <div className="text-2xl font-bold text-blue-900">{suspectsCount}</div>
           </CardContent>
         </Card>
-        <Card onClick={()=> router.push("/dashboard/charges")} className="border-blue-200">
+        <Card
+          onClick={() => router.push("/dashboard/charges")}
+          className="border-blue-200"
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-white">
             <CardTitle className="text-sm font-medium text-blue-900">Charges</CardTitle>
             <Gavel className="h-4 w-4 text-blue-400" />
@@ -130,7 +150,10 @@ export function DashboardOverview() {
             <div className="text-2xl font-bold text-blue-900">{chargesCount}</div>
           </CardContent>
         </Card>
-        <Card onClick={()=> router.push("/dashboard/facilities")} className="border-blue-200">
+        <Card
+          onClick={() => router.push("/dashboard/facilities")}
+          className="border-blue-200"
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-white">
             <CardTitle className="text-sm font-medium text-blue-900">
               Health Facilities
@@ -141,13 +164,18 @@ export function DashboardOverview() {
             <div className="text-2xl font-bold text-blue-900">{facilitiesCount}</div>
           </CardContent>
         </Card>
-        <Card onClick={()=> router.push("/dashboard/suspects")} className="border-blue-200">
+        <Card
+          onClick={() => router.push("/dashboard/toxicological-forensic-exam")} // Updated route
+          className="border-blue-200"
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-white">
-            <CardTitle className="text-sm font-medium text-blue-900">Examinations</CardTitle>
-            <Briefcase className="h-4 w-4 text-blue-400" />
+            <CardTitle className="text-sm font-medium text-blue-900">
+              Toxicological & Forensic Exam
+            </CardTitle>
+            <Briefcase className="h-4 w-4 text-blue-400" /> {/* Using Briefcase as a placeholder; consider a more specific icon like Flask */}
           </CardHeader>
           <CardContent className="bg-white">
-            <div className="text-2xl font-bold text-blue-900">{examinationsCount}</div>
+            <div className="text-2xl font-bold text-blue-900">{toxicologicalExamsCount}</div>
           </CardContent>
         </Card>
       </div>

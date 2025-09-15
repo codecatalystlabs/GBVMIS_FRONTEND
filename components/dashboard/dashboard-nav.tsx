@@ -47,6 +47,11 @@ const navItems: NavItem[] = [
     href: "/dashboard/health-practitioners",
     icon: Phone,
   },
+  {
+    title: "Toxicological & Forensic Exam",
+    href: "/dashboard/toxicological-forensic-exam",
+    icon: BarChart3, 
+  },
   { title: "Reports", href: "/dashboard/reports", icon: BarChart3 },
   { title: "Settings", href: "/dashboard/settings", icon: Settings },
   { title: "Help", href: "/dashboard/help", icon: HelpCircle },
@@ -57,10 +62,8 @@ export function DashboardNav() {
   const { isOpen, isCollapsed, close } = useSidebar();
   const isMobile = useMediaQuery("(max-width: 768px)");
 
-  
   const isSettingsPage = pathname.includes("/dashboard/settings");
 
-  
   const handleNavClick = () => {
     if (isMobile) {
       close();
@@ -74,12 +77,9 @@ export function DashboardNav() {
         <div
           className="fixed inset-0 z-20 bg-gray-100/80 backdrop-blur-sm md:hidden"
           onClick={(e) => {
-            // Prevent closing if we're in settings page and clicking on a form element
             if (
               isSettingsPage &&
-              (e.target as HTMLElement).closest(
-                "form, button, [role='tablist']"
-              )
+              (e.target as HTMLElement).closest("form, button, [role='tablist']")
             ) {
               e.stopPropagation();
               return;
@@ -145,10 +145,7 @@ export function DashboardNav() {
           </nav>
         </ScrollArea>
         <div
-          className={cn(
-            "border-t border-blue-200 p-4",
-            isCollapsed && "flex justify-center p-2"
-          )}
+          className={cn("border-t border-blue-200 p-4", isCollapsed && "flex justify-center p-2")}
         >
           {isCollapsed ? (
             <TooltipProvider delayDuration={0}>

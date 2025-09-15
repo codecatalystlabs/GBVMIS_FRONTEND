@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input"
 import { toast } from "react-toastify"
 import { useAuth } from "@/context/AuthContext" // AuthContext for authentication state management
 
-// This component uses AuthContext for authentication
+// This component uses AuthContext for authentications
 
 const formSchema = z.object({
   email: z.string().min(2),

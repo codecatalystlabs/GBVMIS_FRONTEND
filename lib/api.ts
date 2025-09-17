@@ -1,4 +1,4 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://clims.health.go.ug/api";
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://dev.codecatalystug.com/api";
 
 const withBaseUrl = (path: string) =>
   `${BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
@@ -30,13 +30,27 @@ const refreshToken = async () => {
   });
 
   if (!res.ok) {
-    throw new Error("Failed to refresh token");
+    // Improved: Try to get specific error message
+    let errorMessage = "Failed to refresh token";
+    try {
+      const errorInfo = await res.json();
+      errorMessage = errorInfo.message || errorInfo.error || errorMessage;
+    } catch {
+      errorMessage = res.statusText || errorMessage;
+    }
+    throw new Error(errorMessage);
   }
 
   const data = await res.json();
   setTokens(data.access_token, data.refresh_token);
   return data.access_token;
 };
+
+// Custom error interface for better TS
+interface ApiError extends Error {
+  info?: any;
+  status?: number;
+}
 
 const handleRequest = async (
   path: string,
@@ -48,38 +62,74 @@ const handleRequest = async (
   if (res.status === 401 && retry) {
     try {
       const newAccessToken = await refreshToken();
-      options.headers = {
-        ...(options.headers || {}),
-        Authorization: `Bearer ${newAccessToken}`,
+      const updatedOptions = {
+        ...options,
+        headers: {
+          ...(options.headers || {}),
+          Authorization: `Bearer ${newAccessToken}`,
+        },
       };
-      return handleRequest(path, options, false); // retry once
+      return handleRequest(path, updatedOptions, false); // Retry once, avoid mutation
     } catch (err) {
-      throw new Error("Session expired. Please log in again.");
+      const errorMessage = err instanceof Error ? err.message : "Session expired. Please log in again.";
+      throw new Error(errorMessage);
     }
   }
 
   if (!res.ok) {
-    const error = new Error("An error occurred while fetching the data.");
-    (error as any).info = await res.json();
-    (error as any).status = res.status;
+    let errorMessage = `HTTP ${res.status}: An error occurred while fetching the data.`;
+    let errorInfo: any = null;
+    try {
+      errorInfo = await res.json();
+      errorMessage = errorInfo.message || errorInfo.error || res.statusText || errorMessage;
+    } catch (parseErr) {
+      errorMessage = res.statusText || errorMessage;
+    }
+
+    const error: ApiError = new Error(errorMessage);
+    error.info = errorInfo;
+    error.status = res.status;
     throw error;
   }
 
-  return res.json();
+  const contentType = res.headers.get("content-type");
+  if (contentType && contentType.includes("application/json")) {
+    return res.json();
+  }
+  return res.text(); // Fallback for non-JSON
 };
 
-export const fetcher = async (path: string) => {
+const buildUrlWithQuery = (path: string, queryParams?: Record<string, any>) => {
+  if (!queryParams || Object.keys(queryParams).length === 0) return path;
+  const queryString = new URLSearchParams(queryParams).toString();
+  return `${path}?${queryString}`;
+};
+
+export const fetcher = async (path: string, queryParams?: Record<string, any>) => {
   const token = getToken();
-  return handleRequest(path, {
+  const fullPath = buildUrlWithQuery(path, queryParams);
+  return handleRequest(fullPath, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
+      ...(token && { Authorization: `Bearer ${token}` }),
     },
   });
 };
 
 export const apiClient = {
+  get: async <TResponse = any>(path: string, queryParams?: Record<string, any>): Promise<TResponse> => {
+    const token = getToken();
+    const fullPath = buildUrlWithQuery(path, queryParams);
+    return handleRequest(fullPath, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    });
+  },
+
   post: async <TBody extends Record<string, any>, TResponse = any>(
     path: string,
     body: TBody
@@ -89,7 +139,7 @@ export const apiClient = {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        ...(token && { Authorization: `Bearer ${token}` }),
       },
       body: JSON.stringify(body),
     });
@@ -104,7 +154,7 @@ export const apiClient = {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        ...(token && { Authorization: `Bearer ${token}` }),
       },
       body: JSON.stringify(body),
     });
@@ -115,7 +165,7 @@ export const apiClient = {
     return handleRequest(path, {
       method: "DELETE",
       headers: {
-        Authorization: `Bearer ${token}`,
+        ...(token && { Authorization: `Bearer ${token}` }),
       },
     });
   },
@@ -128,12 +178,13 @@ export const apiClient = {
     return handleRequest(path, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${token}`,
+        ...(token && { Authorization: `Bearer ${token}` }),
         // Do NOT set Content-Type; browser will set it with boundary
       },
       body: formData,
     });
   },
+
   putFormData: async <TResponse = any>(
     path: string,
     formData: FormData
@@ -142,10 +193,10 @@ export const apiClient = {
     return handleRequest(path, {
       method: "PUT",
       headers: {
-        Authorization: `Bearer ${token}`,
+        ...(token && { Authorization: `Bearer ${token}` }),
         // Do NOT set Content-Type; browser will set it with boundary
       },
       body: formData,
     });
-  }
+  },
 };

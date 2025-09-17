@@ -103,12 +103,14 @@ export interface Charge {
   deletedAt?: { time: string; valid: boolean };
 }
 
+// Updated to match component form/table (toxicological-specific fields)
 export interface Examination {
   id: number;
-  victim_id: string | number;
-  findings: string;
-  examiner: string;
-  date: string;
+  sampleId: string;
+  patientName: string;
+  dateCollected: string;
+  labResult: string;
+  analystName: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -128,4 +130,10 @@ export interface PaginatedResponse<T> {
     total_items: number;
     total_pages: number;
   };
+}
+
+// Custom error for api.ts
+export interface ApiError extends Error {
+  info?: any;
+  status?: number;
 }

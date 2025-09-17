@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [])
 
   const login = async (email: string, password: string) => {
-    const response = await fetch("https://clims.health.go.ug/api/login", {
+    const response = await fetch("https://dev.codecatalystug.com/api/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

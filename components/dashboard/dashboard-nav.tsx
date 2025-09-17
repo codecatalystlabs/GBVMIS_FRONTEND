@@ -49,7 +49,7 @@ const navItems: NavItem[] = [
   },
   {
     title: "Toxicological & Forensic Exam",
-    href: "/dashboard/toxicological-forensic-exam",
+    href: "/dashboard/ToxicologicalForensicExam",
     icon: BarChart3, 
   },
   { title: "Reports", href: "/dashboard/reports", icon: BarChart3 },

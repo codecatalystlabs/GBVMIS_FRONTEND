@@ -42,9 +42,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import jsPDF from "jspdf";
 import { fetcher, apiClient } from "@/lib/api";
+import type { Examination, PaginatedResponse } from "@/types/index"; // Adjust path to your interfaces
 
 // Form validation schema
-const toxicologicalExamSchema = z.object({
+const examinationSchema = z.object({
   sampleId: z.string().min(1, { message: "Sample ID is required" }),
   patientName: z.string().min(2, { message: "Patient name must be at least 2 characters" }),
   dateCollected: z.string().min(1, { message: "Date is required" }),
@@ -52,7 +53,7 @@ const toxicologicalExamSchema = z.object({
   analystName: z.string().min(2, { message: "Analyst name must be at least 2 characters" }),
 });
 
-type ToxicologicalExamFormValues = z.infer<typeof toxicologicalExamSchema>;
+type ExaminationFormValues = z.infer<typeof examinationSchema>;
 
 export default function ToxicologicalForensicExamTable() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -60,10 +61,23 @@ export default function ToxicologicalForensicExamTable() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
-  const { data: examsData, error: examsError, isLoading: examsLoading, mutate: mutateExams } = useSWR("/toxicological-exams", fetcher);
 
-  const form = useForm<ToxicologicalExamFormValues>({
-    resolver: zodResolver(toxicologicalExamSchema),
+  // Updated SWR key for API pagination/search
+  const swrKey = searchTerm || currentPage > 1 
+    ? `/examinations?page=${currentPage}&limit=${itemsPerPage}${searchTerm ? `&q=${searchTerm}` : ''}` 
+    : "/examinations";
+
+  const { data: examsResponse, error: examsError, isLoading: examsLoading, mutate: mutateExams } = useSWR<PaginatedResponse<Examination>>(
+    swrKey,
+    fetcher
+  );
+
+  const examsData = examsResponse?.data || [];
+  const pagination = examsResponse?.pagination || { page: 1, limit: itemsPerPage, total_items: 0, total_pages: 1 };
+  const totalPages = pagination.total_pages;
+
+  const form = useForm<ExaminationFormValues>({
+    resolver: zodResolver(examinationSchema),
     defaultValues: {
       sampleId: "",
       patientName: "",
@@ -73,22 +87,23 @@ export default function ToxicologicalForensicExamTable() {
     },
   });
 
-  const onSubmit = async (values: ToxicologicalExamFormValues) => {
+  const onSubmit = async (values: ExaminationFormValues) => {
     setIsSubmitting(true);
     try {
-      await apiClient.post("/toxicological-exams", values);
+      await apiClient.post("/examination", values);
       await mutateExams();
       toast.success("Exam data saved successfully!");
       setIsAddDialogOpen(false);
       form.reset();
+      setCurrentPage(1);
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to save exam data");
+      toast.error(error.message || "Failed to save exam data");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const generatePDF = (examData: ToxicologicalExamFormValues) => {
+  const generatePDF = (examData: Examination) => {
     const doc = new jsPDF();
     doc.text("Official Toxicological Report", 10, 10);
     doc.text(`Sample ID: ${examData.sampleId}`, 10, 20);
@@ -96,21 +111,19 @@ export default function ToxicologicalForensicExamTable() {
     doc.text(`Date Collected: ${examData.dateCollected}`, 10, 40);
     doc.text(`Lab Result: ${examData.labResult}`, 10, 50);
     doc.text(`Analyst Name: ${examData.analystName}`, 10, 60);
-    doc.text(`Generated: ${new Date().toLocaleString("en-US", { timeZone: "EAT" })}`, 10, 70); // 09:28 AM EAT, September 15, 2025
+    doc.text(`Generated: ${new Date().toLocaleString("en-US", { timeZone: "EAT" })}`, 10, 70); // 03:25 PM EAT, September 17, 2025
     doc.save(`toxicological_report_${examData.sampleId}.pdf`);
   };
 
-  // Filter and paginate data
-  const filteredExams = examsData?.data.filter((exam: any) =>
-    exam.sampleId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    exam.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    exam.labResult.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    exam.analystName.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentExams = filteredExams.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredExams.length / itemsPerPage);
+  // Sanitize pagination values to prevent NaN
+  const safePage = Math.max(1, Number(pagination.page) || 1);
+  const safeLimit = Math.max(1, Number(pagination.limit) || itemsPerPage);
+  const safeTotalItems = Math.max(0, Number(pagination.total_items) || 0);
+
+  const indexOfFirstItem = (safePage - 1) * safeLimit + 1;
+  const indexOfLastItem = Math.min(indexOfFirstItem + safeLimit - 1, safeTotalItems);
+
+  const currentExams: Examination[] = examsData; // Explicitly type currentExams as Examination[]
 
   if (examsLoading) {
     return (
@@ -123,7 +136,7 @@ export default function ToxicologicalForensicExamTable() {
   if (examsError) {
     return (
       <div className="text-red-500 text-center py-8 bg-gray-100 rounded-xl">
-        Error loading exam data
+        Error loading exam data: {(examsError as Error).message}
       </div>
     );
   }
@@ -137,7 +150,10 @@ export default function ToxicologicalForensicExamTable() {
             type="search"
             placeholder="Search by Sample ID, Patient Name, Result, or Analyst..."
             value={searchTerm}
-            onChange={(e: { target: { value: SetStateAction<string>; }; }) => setSearchTerm(e.target.value)}
+            onChange={(e: { target: { value: SetStateAction<string>; }; }) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
             className="w-full pl-10 sm:w-[300px] bg-white border-blue-200 text-blue-900 placeholder-blue-400 focus:ring-2 focus:ring-blue-600 transition-all duration-300"
           />
         </div>
@@ -278,7 +294,7 @@ export default function ToxicologicalForensicExamTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {currentExams.map((exam: any) => (
+            {currentExams.map((exam: Examination) => (
               <TableRow key={exam.id} className="border-t border-blue-200 hover:bg-gray-200 transition-all duration-200">
                 <TableCell className="p-3 font-medium text-blue-900">{exam.sampleId}</TableCell>
                 <TableCell className="p-3 text-blue-900">{exam.patientName}</TableCell>
@@ -302,8 +318,8 @@ export default function ToxicologicalForensicExamTable() {
 
       <div className="flex items-center justify-between py-3 px-4 bg-white border border-blue-200 rounded-xl shadow-md">
         <div className="text-sm text-blue-900">
-          Showing <strong className="text-blue-900">{indexOfFirstItem + 1}</strong> to <strong className="text-blue-900">{Math.min(indexOfLastItem, filteredExams.length)}</strong> of{' '}
-          <strong className="text-blue-900">{filteredExams.length}</strong> results
+          Showing <strong className="text-blue-900">{String(indexOfFirstItem)}</strong> to <strong className="text-blue-900">{String(indexOfLastItem)}</strong> of{' '}
+          <strong className="text-blue-900">{String(pagination.total_items)}</strong> results
         </div>
         <div className="flex items-center gap-2">
           <Button

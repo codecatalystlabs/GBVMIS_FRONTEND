@@ -103,14 +103,18 @@ export interface Charge {
   deletedAt?: { time: string; valid: boolean };
 }
 
-// Updated to match component form/table (toxicological-specific fields)
+// Updated to match new exam fields
 export interface Examination {
   id: number;
-  sampleId: string;
-  patientName: string;
-  dateCollected: string;
-  labResult: string;
-  analystName: string;
+  case_id: number;
+  consent_given: boolean;
+  exam_date: string;
+  facility_id: number;
+  findings: string;
+  practitioner_id: number;
+  referral: string;
+  treatment: string;
+  victim_id: number;
   createdAt?: string;
   updatedAt?: string;
 }

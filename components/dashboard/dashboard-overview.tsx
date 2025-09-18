@@ -32,18 +32,30 @@ import { SalesChart } from "@/components/dashboard/sales-chart";
 import { fetcher } from "@/lib/api";
 import { useRouter } from "next/navigation";
 
+import {
+  Victim,
+  Case,
+  PolicePost,
+  Suspect,
+  PoliceOfficer,
+  Examination,
+  Charge,
+  PaginatedResponse,
+} from '../../types/index'; // Adjust path to your types file
+
 export function DashboardOverview() {
-  // Fetch counts for each entity
-  const { data: victimsData } = useSWR("/victims", fetcher);
-  const { data: casesData } = useSWR("/cases", fetcher);
   const router = useRouter();
-  const { data: suspectsData } = useSWR("/suspects", fetcher);
-  const { data: officersData } = useSWR("/police-officers", fetcher);
-  const { data: facilitiesData } = useSWR("/health-facilities", fetcher);
-  const { data: examinationsData } = useSWR("/examinations", fetcher);
-  const { data: postsData } = useSWR("/police-posts", fetcher);
-  const { data: chargesData } = useSWR("/charges", fetcher);
-  const { data: toxicologicalExamsData } = useSWR("/toxicological-exams", fetcher); // Added for Toxicological & Forensic Exam
+
+  // Use PaginatedResponse for endpoints that return paginated data
+  const { data: victimsData } = useSWR<PaginatedResponse<Victim>>("/victims", fetcher);
+  const { data: casesData } = useSWR<PaginatedResponse<Case>>("/cases", fetcher);
+  const { data: suspectsData } = useSWR<PaginatedResponse<Suspect>>("/suspects", fetcher);
+  const { data: officersData } = useSWR<PaginatedResponse<PoliceOfficer>>("/police-officers", fetcher);
+  const { data: facilitiesData } = useSWR<PaginatedResponse<any>>("/health-facilities", fetcher); // Replace any with HealthFacility type if defined
+  const { data: examinationsData } = useSWR<PaginatedResponse<Examination>>("/examinations", fetcher);
+  const { data: postsData } = useSWR<PaginatedResponse<PolicePost>>("/police-posts", fetcher);
+  const { data: chargesData } = useSWR<PaginatedResponse<Charge>>("/charges", fetcher);
+  const { data: toxicologicalExamsData } = useSWR<PaginatedResponse<Examination>>("/ToxicologicalForensicExam", fetcher);
 
   const victimsCount = victimsData?.data?.length || 0;
   const casesCount = casesData?.data?.length || 0;
@@ -53,17 +65,17 @@ export function DashboardOverview() {
   const examinationsCount = examinationsData?.data?.length || 0;
   const postsCount = postsData?.data?.length || 0;
   const chargesCount = chargesData?.data?.length || 0;
-  const toxicologicalExamsCount = toxicologicalExamsData?.data?.length || 0; 
+  const toxicologicalExamsCount = toxicologicalExamsData?.data?.length || 0;
 
   // Prepare cases per police post for a simple bar chart
   let casesPerPost: Record<string, number> = {};
   if (casesData?.data && postsData?.data) {
-    postsData.data.forEach((post: any) => {
+    postsData.data.forEach((post) => {
       casesPerPost[post.name] = 0;
     });
-    casesData.data.forEach((c: any) => {
+    casesData.data.forEach((c) => {
       const post = postsData.data.find(
-        (p: any) => p.id === c.police_post_id || p.ID === c.police_post_id
+        (p) => p.id === c.police_post_id || (p as any).ID === c.police_post_id
       );
       if (post) {
         casesPerPost[post.name] = (casesPerPost[post.name] || 0) + 1;
@@ -165,14 +177,14 @@ export function DashboardOverview() {
           </CardContent>
         </Card>
         <Card
-          onClick={() => router.push("/dashboard/toxicological-forensic-exam")} // Updated route
+          onClick={() => router.push("/dashboard/ToxicologicalForensicExam")}
           className="border-blue-200"
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-white">
             <CardTitle className="text-sm font-medium text-blue-900">
               Toxicological & Forensic Exam
             </CardTitle>
-            <Briefcase className="h-4 w-4 text-blue-400" /> {/* Using Briefcase as a placeholder; consider a more specific icon like Flask */}
+            <Briefcase className="h-4 w-4 text-blue-400" />
           </CardHeader>
           <CardContent className="bg-white">
             <div className="text-2xl font-bold text-blue-900">{toxicologicalExamsCount}</div>

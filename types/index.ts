@@ -103,18 +103,14 @@ export interface Charge {
   deletedAt?: { time: string; valid: boolean };
 }
 
-// Updated to match new exam fields
+
 export interface Examination {
   id: number;
-  case_id: number;
-  consent_given: boolean;
-  exam_date: string;
-  facility_id: number;
-  findings: string;
-  practitioner_id: number;
-  referral: string;
-  treatment: string;
-  victim_id: number;
+  sampleId: string;
+  patientName: string;
+  dateCollected: string;
+  labResult: string;
+  analystName: string;
   createdAt?: string;
   updatedAt?: string;
 }

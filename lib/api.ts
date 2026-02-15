@@ -1,4 +1,4 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://clims.health.go.ug/api";
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8085/api";
 
 const withBaseUrl = (path: string) =>
   `${BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
